@@ -1,0 +1,12 @@
+import foundational
+
+meihua add_capacity(a : magnitude, b : magnitude) :
+  a + b
+
+meihua scale_capacity(cap : magnitude, factor) :
+  cap * factor
+
+meihua passthrough(val) : val
+
+meihua distance(start : magnitude, end : magnitude, speed : magnitude) :
+  (end - start) / speed

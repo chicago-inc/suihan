@@ -1,0 +1,64 @@
+import foundational
+
+dimension auth_states : authenticated | unauthenticated | expired | refreshing
+
+dimension auth_actions : login | logout | refresh | validate | revoke
+
+ξ jwt_expiry_seconds : 3600
+ξ refresh_window_seconds : 300
+ξ max_session_duration : 86400
+ξ max_concurrent_sessions : 5
+
+projection auth_behavior :
+  invariant ξ auth_state
+  context ζ auth_action
+  yields ω behavior
+  cases:
+    (authenticated, login) -> "redirect_to_home"
+    (authenticated, logout) -> "clear_session_and_redirect"
+    (authenticated, refresh) -> "extend_session"
+    (authenticated, validate) -> "return_valid"
+    (authenticated, revoke) -> "invalidate_all_sessions"
+    (unauthenticated, login) -> "show_login_form"
+    (unauthenticated, logout) -> "noop"
+    (unauthenticated, refresh) -> "redirect_to_login"
+    (unauthenticated, validate) -> "return_invalid"
+    (unauthenticated, revoke) -> "noop"
+    (expired, login) -> "show_login_form"
+    (expired, logout) -> "clear_session_and_redirect"
+    (expired, refresh) -> "attempt_refresh"
+    (expired, validate) -> "return_expired"
+    (expired, revoke) -> "invalidate_all_sessions"
+    (refreshing, login) -> "wait_for_refresh"
+    (refreshing, logout) -> "abort_and_clear"
+    (refreshing, refresh) -> "noop_already_refreshing"
+    (refreshing, validate) -> "wait_for_refresh"
+    (refreshing, revoke) -> "abort_and_invalidate"
+    (_, _) -> "unknown_auth_state"
+
+projection session_display :
+  invariant ξ auth_state
+  context ζ display_field
+  yields ω value
+  cases:
+    (authenticated, icon) -> "shield-check"
+    (authenticated, label) -> "Active Session"
+    (authenticated, color) -> "#16a34a"
+    (unauthenticated, icon) -> "shield-off"
+    (unauthenticated, label) -> "Not Signed In"
+    (unauthenticated, color) -> "#6B7280"
+    (expired, icon) -> "shield-alert"
+    (expired, label) -> "Session Expired"
+    (expired, color) -> "#ef4444"
+    (refreshing, icon) -> "loader"
+    (refreshing, label) -> "Refreshing..."
+    (refreshing, color) -> "#f59e0b"
+    (_, icon) -> "shield"
+    (_, label) -> "Unknown"
+    (_, color) -> "#9CA3AF"
+
+meihua token_time_remaining(issued_at : magnitude, expiry_seconds : magnitude, now : magnitude) :
+  (issued_at + expiry_seconds) - now
+
+meihua needs_refresh(issued_at : magnitude, expiry_seconds : magnitude, refresh_window : magnitude, now : magnitude) :
+  (issued_at + expiry_seconds - refresh_window) - now

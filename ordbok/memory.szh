@@ -1,0 +1,77 @@
+-- memory.szh
+-- Mongwu memory management specification.
+-- Page allocation is meihua (pure). Page table writes are zhulin (control).
+-- Physical memory layout is songqiao (situated). These three are perpendicular.
+--
+-- Compiles to x86_64 assembly via: suhc memory.szh --target asm
+
+-- ═══════════════════════════════════════════════════
+-- Identity (ξ) — hardware constants
+-- ═══════════════════════════════════════════════════
+
+ξ page_size : 4096
+ξ kernel_start : 0x0
+ξ kernel_end : 0x100000
+ξ bitmap_start : 0x200000
+ξ vga_base : 0xB8000
+ξ vga_end : 0xBFFFF
+
+-- ═══════════════════════════════════════════════════
+-- Dimensions — page states
+-- ═══════════════════════════════════════════════════
+
+dimension page_state : free | allocated | reserved | kernel_page
+
+-- ═══════════════════════════════════════════════════
+-- Meihua (梅花) — pure allocation math
+-- No side effects. Input → output. Register-only.
+-- ═══════════════════════════════════════════════════
+
+-- Convert page index to physical address
+meihua page_to_addr(index : magnitude) :
+  index * 4096
+
+-- Convert physical address to page index
+meihua addr_to_page(addr : magnitude) :
+  addr / 4096
+
+-- Compute byte offset in bitmap for a given page index
+meihua bitmap_byte(index : magnitude) :
+  index / 8
+
+-- Compute bit position within byte for a given page index
+meihua bitmap_bit(index : magnitude) :
+  index - ((index / 8) * 8)
+
+-- Total pages from memory size in bytes
+meihua total_pages(mem_bytes : magnitude) :
+  mem_bytes / 4096
+
+-- Bitmap size in bytes needed for given page count
+meihua bitmap_size(page_count : magnitude) :
+  (page_count + 7) / 8
+
+-- ═══════════════════════════════════════════════════
+-- Zhulin (竹林) — control flow for allocation
+-- These have side effects (write to bitmap / page tables)
+-- ═══════════════════════════════════════════════════
+
+-- Initialize: zero bitmap, mark reserved regions
+zhulin mem_init :
+  bitmap_size(total_pages(mem_total))
+
+-- Allocate one page: scan bitmap for first free, mark allocated
+zhulin page_alloc :
+  page_to_addr(0)
+
+-- Free one page: clear bit in bitmap
+zhulin page_free(addr : magnitude) :
+  addr_to_page(addr)
+
+-- ═══════════════════════════════════════════════════
+-- Songqiao (松喬) — physical memory layout
+-- Machine-specific: Acer E5-576G with 16 GB DDR4
+-- ═══════════════════════════════════════════════════
+
+songqiao memory_layout :
+  { mem_total: 17179869184, page_count: 4194304, bitmap_bytes: 524288, reserved_end: 0x100000, bitmap_addr: 0x200000 }

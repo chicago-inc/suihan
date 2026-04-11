@@ -1,0 +1,5 @@
+zhulin resolve_path(headedness) :
+  match headedness { unheaded -> "conjunction", headed -> "filter", _ -> "expand" }
+
+zhulin gate_check(role_count, max_roles) :
+  if role_count > max_roles then 0 else 1

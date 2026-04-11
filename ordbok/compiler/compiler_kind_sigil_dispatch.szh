@@ -1,0 +1,20 @@
+-- compiler_kind_sigil_dispatch.szh
+-- M6: Parser self-description — kind sigil token → kind_t dispatch.
+-- Emits to include/gen/kind_sigil_dispatch.h via --target c.
+-- Maps the six kind sigil tokens to their corresponding Kind enum values.
+-- Empty string = not a sigil token (no match).
+
+import compiler_token_types
+import compiler_kinds
+
+projection kind_sigil_dispatch :
+  invariant ξ tok
+  yields ω kind_sigil
+  cases:
+    xi -> "xi"
+    zeta -> "zeta"
+    x -> "x"
+    rk -> "rk"
+    omega -> "omega"
+    delta_rk -> "delta_rk"
+    _ -> ""

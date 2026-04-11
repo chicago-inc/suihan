@@ -1,0 +1,12 @@
+dimension fruit : apple | banana | cherry
+
+projection fruit_color :
+  invariant ξ fruit
+  context ζ display_mode
+  yields ω color
+  cases:
+    (apple, _) -> "#ff0000"
+    (banana, _) -> "#ffff00"
+    (cherry, _) -> "#8b0000"
+    (mango, _) -> "#ff8c00"
+    (_, _) -> "#808080"

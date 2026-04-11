@@ -1,0 +1,64 @@
+-- VHDL/Verilog: hardware description, signals, processes, concurrent assignment
+-- Tests: can suhc express parallelism and hardware timing?
+
+unit signal
+unit port
+unit entity
+unit architecture
+
+-- Signal types
+dimension signal_type : [std_logic, std_logic_vector, integer_sig, boolean_sig, time_sig]
+
+-- Port directions
+dimension port_direction : [port_in, port_out, port_inout, port_buffer]
+
+-- Process sensitivity
+dimension trigger_type : [rising_edge, falling_edge, level_sensitive, combinational]
+
+-- Signal assignment semantics (delta cycle model)
+projection signal_update :
+  invariant ξ trigger_type
+  context ζ signal_type
+  yields ω timing
+  cases:
+    (rising_edge, std_logic) -> "clock_sync"
+    (falling_edge, std_logic) -> "clock_sync_neg"
+    (level_sensitive, std_logic) -> "latch"
+    (combinational, std_logic) -> "wire"
+    (rising_edge, std_logic_vector) -> "register"
+    (combinational, std_logic_vector) -> "bus"
+    (_, _) -> "delta_delay"
+
+-- Entity-architecture binding
+dependency architecture_of : architecture -> entity
+  carries: port_map
+  structure: implementation
+
+-- Concurrent vs sequential
+dimension execution_model : [concurrent, sequential, generate_loop]
+
+-- State machines (the bread and butter of HDL)
+dimension fsm_state : [idle, active, wait_state, done, error_state]
+
+projection state_transition :
+  invariant ξ fsm_state
+  context ζ input_condition
+  yields ω next_state
+  cases:
+    (idle, start_signal) -> "active"
+    (active, complete_signal) -> "done"
+    (active, error_signal) -> "error_state"
+    (wait_state, ready_signal) -> "active"
+    (done, reset_signal) -> "idle"
+    (error_state, reset_signal) -> "idle"
+    (_, timeout) -> "error_state"
+    (_, _) -> "hold"
+
+dimension input_condition : [start_signal, complete_signal, error_signal, ready_signal, reset_signal, timeout]
+
+-- Generics (parameterized hardware)
+meihua bus_width(data_bits, parity) : data_bits + parity
+
+incommensurable signal, port, entity
+perpendicular signal_type, port_direction
+perpendicular trigger_type, execution_model

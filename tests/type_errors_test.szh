@@ -1,0 +1,5 @@
+import foundational
+
+meihua bad_type(val : nonexistent_type) : val
+
+meihua good_type(val : magnitude) : val

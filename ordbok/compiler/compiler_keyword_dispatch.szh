@@ -1,0 +1,31 @@
+-- compiler_keyword_dispatch.szh
+-- M6: Parser self-description — keyword → parse function dispatch.
+-- Emits to include/gen/keyword_dispatch.h via --target c.
+-- Each arm maps a keyword token to its parse function name.
+-- The parser_dispatch mode generates: Decl* keyword_dispatch(Parser* p, tok_t tok)
+-- Empty string = no handler (falls through to error).
+
+import compiler_token_types
+
+projection keyword_dispatch :
+  invariant ξ tok
+  yields ω parser_dispatch
+  cases:
+    unit -> "parse_unit_like_unit"
+    magnitude -> "parse_unit_like_magnitude"
+    vector -> "parse_unit_like_vector"
+    dimension -> "parse_dimension"
+    dependency -> "parse_dependency"
+    containment -> "parse_containment"
+    morphism -> "parse_morphism"
+    projection -> "parse_projection"
+    traversal -> "parse_traversal"
+    incommensurable -> "parse_relation_incommensurable"
+    commensurable -> "parse_relation_commensurable"
+    perpendicular -> "parse_relation_perpendicular"
+    meihua -> "parse_exec_layer_meihua"
+    zhulin -> "parse_exec_layer_zhulin"
+    songqiao -> "parse_exec_layer_songqiao"
+    import -> "parse_import"
+    zero -> "parse_zero_decl"
+    _ -> ""

@@ -1,0 +1,40 @@
+-- oracle.szh
+-- Tests the decidability checker (D10: oracle ceiling).
+-- auto_assign should be rejected. show_suggestions should pass.
+
+unit venue
+unit user
+
+ξ venue_status : available | reserved | occupied
+
+x table_options : magnitude
+
+-- This traversal produces undecidable output.
+-- Two reasonable operators would seat differently.
+traversal suggest_table :
+  identity ξ :
+    venue.layout
+  data x :
+    party_size
+  operator R.k :
+    rank(available_tables, preferences)
+  output ω :
+    undecidable suggestions
+
+-- ERROR: acts on undecidable output without user confirmation.
+traversal auto_assign :
+  data x :
+    suggest_table.output
+  operator R.k :
+    assign(x.first)
+  output ω :
+    confirmation
+
+-- VALID: presents undecidable output — does not act.
+traversal show_suggestions :
+  data x :
+    suggest_table.output
+  operator R.k :
+    present(x)
+  output ω :
+    rendered_list

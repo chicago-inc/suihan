@@ -1,0 +1,19 @@
+-- Sprint 6B test: multi-error reporting
+-- This file has deliberate errors across multiple diagnostic categories.
+-- The compiler should report ALL of them in a single run.
+
+dimension test_dims : alpha | beta | gamma
+
+-- Kind violation: ξ holding numeric (scope_confusion warning)
+ξ bad_number : 42
+
+-- Arity error: call with wrong arg count
+meihua adder(a : magnitude, b : magnitude) :
+  a + b
+
+meihua caller() :
+  adder(1, 2, 3)
+
+-- Unknown type annotation
+meihua bad_type(x : nonexistent_type) :
+  x + 1

@@ -1,0 +1,58 @@
+-- Rust: ownership, borrowing, lifetimes, traits, enums with data
+-- Tests: can suhc express linear types and ownership semantics?
+
+unit resource
+unit reference
+unit lifetime
+
+-- Ownership as dimension — a resource is owned, borrowed, or moved
+dimension ownership : [owned, borrowed, mut_borrowed, moved, dropped]
+
+-- Lifetime as dimension
+dimension lifetime_scope : [static_lt, function_lt, block_lt, expression_lt]
+
+-- Ownership transfer as morphism
+morphism move_ownership : owned -> moved
+  preserves: value
+  changes: ownership
+
+morphism borrow : owned -> borrowed
+  preserves: value, ownership
+  changes: access_mode
+
+morphism drop_resource : owned -> dropped
+  preserves: nothing
+  changes: existence
+
+-- Rust enum with data (Result<T, E>)
+dimension result_variant : [ok, err]
+
+projection result_handler :
+  invariant ξ result_variant
+  context ζ error_type
+  yields ω action
+  cases:
+    (ok, _) -> "unwrap_value"
+    (err, recoverable) -> "handle_error"
+    (err, fatal) -> "panic"
+    (_, _) -> "unreachable"
+
+-- Trait as projection
+projection display_trait :
+  invariant ξ type_name
+  context ζ format_spec
+  yields ω formatter
+  cases:
+    (integer, debug) -> "Debug::fmt"
+    (integer, display) -> "Display::fmt"
+    (string_type, debug) -> "Debug::fmt"
+    (string_type, display) -> "Display::fmt"
+    (_, _) -> "not_implemented"
+
+-- Lifetime annotation as meihua (can we express 'a constraints?)
+meihua lifetime_check(ref_lifetime, owner_lifetime) :
+  if ref_lifetime > owner_lifetime then "dangling" else "valid"
+
+-- Pin and Unpin — can we express !Unpin?
+incommensurable resource, reference
+perpendicular ownership, lifetime_scope

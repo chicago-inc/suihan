@@ -1,0 +1,25 @@
+import foundational
+
+meihua compliance_score(violations : magnitude, total_checks : magnitude) :
+  (total_checks - violations) / total_checks * 100
+
+meihua hot_cost(base_cost : magnitude, quantity : magnitude, markup_pct : magnitude) :
+  base_cost * quantity * (1 + markup_pct / 100)
+
+meihua token_entropy(length : magnitude) :
+  length * log2(62)
+
+meihua days_between(start_ms : magnitude, end_ms : magnitude) :
+  (end_ms - start_ms) / 86400000
+
+meihua delivery_capacity(drivers : magnitude, avg_time_min : magnitude, window_hours : magnitude) :
+  drivers * (window_hours * 60 / avg_time_min)
+
+meihua percentage(part : magnitude, whole : magnitude) :
+  part / whole * 100
+
+meihua lerp(a : magnitude, b : magnitude, t : magnitude) :
+  a + (b - a) * t
+
+meihua clamp(value : magnitude, low : magnitude, high : magnitude) :
+  min(high, max(low, value))

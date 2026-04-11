@@ -1,0 +1,53 @@
+name: 'Suihan Structural Lint'
+description: 'Static analysis powered by the suihan compiler — bloat detection, perpendicularity checking, smegmacrum detection, decidability boundary enforcement'
+inputs:
+  ordbok:
+    description: 'Path to ordbok directory containing .szh declarations'
+    required: true
+  targets:
+    description: 'Path to source directory to lint (TypeScript/SQL)'
+    required: true
+  format:
+    description: 'Output format: human, json, sarif'
+    required: false
+    default: 'sarif'
+  fail-on:
+    description: 'Fail threshold: error, warning, smegmacrum'
+    required: false
+    default: 'error'
+  security:
+    description: 'Enable security audit report'
+    required: false
+    default: 'false'
+runs:
+  using: 'composite'
+  steps:
+    - name: Download suhc
+      shell: bash
+      run: |
+        SUHC_VERSION="1.1.0"
+        curl -fsSL "https://github.com/dbrockert/Chicago/releases/download/suhc-v${SUHC_VERSION}/suhc-linux-x86_64" -o /tmp/suhc
+        chmod +x /tmp/suhc
+    - name: Run structural lint
+      shell: bash
+      run: |
+        ARGS="--lint --ordbok ${{ inputs.ordbok }} --targets ${{ inputs.targets }}"
+        if [ "${{ inputs.format }}" = "sarif" ]; then
+          ARGS="$ARGS --format sarif"
+          /tmp/suhc $ARGS > suhc-results.sarif 2>&1 || true
+        elif [ "${{ inputs.format }}" = "json" ]; then
+          ARGS="$ARGS --format json"
+          /tmp/suhc $ARGS
+        else
+          /tmp/suhc $ARGS
+        fi
+
+        if [ "${{ inputs.security }}" = "true" ]; then
+          /tmp/suhc --lint --ordbok ${{ inputs.ordbok }} --targets ${{ inputs.targets }} --security
+        fi
+    - name: Upload SARIF
+      if: inputs.format == 'sarif'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: suhc-results.sarif
+      continue-on-error: true

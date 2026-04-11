@@ -1,0 +1,53 @@
+-- APL/J/K: array programming, rank polymorphism, tacit definitions
+-- Tests: can suhc express n-dimensional operations and point-free style?
+
+unit array
+unit scalar
+unit operator_apl
+
+-- Rank as dimension
+dimension rank : [scalar_rank, vector_rank, matrix_rank, cube_rank, hyper_rank]
+
+-- Shape as a property of arrays
+dimension array_op : [reduce, scan, outer, inner, each, rank_op]
+
+-- Rank polymorphism: same operation works at any rank
+projection operation_at_rank :
+  invariant ξ array_op
+  context ζ rank
+  yields ω implementation
+  cases:
+    (reduce, scalar_rank) -> "identity"
+    (reduce, vector_rank) -> "fold"
+    (reduce, matrix_rank) -> "row_fold"
+    (scan, vector_rank) -> "prefix_sum"
+    (scan, matrix_rank) -> "row_prefix_sum"
+    (outer, vector_rank) -> "outer_product"
+    (inner, matrix_rank) -> "matrix_multiply"
+    (each, vector_rank) -> "map"
+    (each, matrix_rank) -> "map_rows"
+    (_, _) -> "extend_rank"
+
+-- Tacit (point-free) programming
+-- Can we express fork and hook combinators?
+meihua fork(f, g, h, x) : f(g(x), h(x))
+meihua hook(f, g, x) : f(x, g(x))
+
+-- APL primitives as meihua
+meihua iota(n) : n
+meihua rho(shape, vals) : shape
+meihua ravel(arr) : arr
+
+-- Reduction (/ in APL)
+meihua sum_reduce(xs) : xs
+meihua prod_reduce(xs) : xs
+
+-- Inner product (e.g., +.× for matrix multiply)
+meihua inner_product(a, b, f, g) : f(g(a, b))
+
+-- The rank operator: apply f at rank k
+meihua at_rank(f, k, arr) :
+  if k == 0 then f(arr) else "distribute"
+
+incommensurable array, scalar
+perpendicular rank, array_op

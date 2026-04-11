@@ -1,0 +1,55 @@
+-- Category Theory as language: functors, natural transformations, adjunctions, Kan extensions
+-- Tests: can suhc express morphism composition and functor mapping?
+
+unit cat_object
+unit cat_morphism
+unit functor_ct
+unit natural_transformation
+
+-- Category structure
+dimension morphism_type : [identity_m, composition, isomorphism, epimorphism, monomorphism]
+
+-- Functor properties
+dimension functor_type : [covariant, contravariant, bifunctor, profunctor, endofunctor]
+
+-- Functors map between categories
+projection functor_action :
+  invariant ξ functor_type
+  context ζ source_structure
+  yields ω target_structure
+  cases:
+    (covariant, object_map) -> "F(A) -> F(B)"
+    (covariant, morphism_map) -> "F(f: A->B) -> F(A)->F(B)"
+    (contravariant, object_map) -> "F(A) -> F(B)"
+    (contravariant, morphism_map) -> "F(f: A->B) -> F(B)->F(A)"
+    (bifunctor, object_map) -> "F(A,B) -> F(C,D)"
+    (endofunctor, object_map) -> "F(A) -> F(A) in same category"
+    (_, _) -> "undefined_functor"
+
+dimension source_structure : [object_map, morphism_map]
+
+-- Natural transformation: morphism between functors
+morphism nat_transform : functor_ct -> functor_ct
+  preserves: naturality_square
+  changes: component_morphisms
+
+-- Adjunction: F ⊣ G (left adjoint / right adjoint)
+dependency adjunction : functor_ct -> functor_ct
+  carries: unit_counit
+  structure: universal_property
+
+-- Yoneda lemma (from the parent constitution!)
+-- "a unit is fully determined by its morphisms"
+ξ yoneda_lemma : "Nat(Hom(A,-), F) ≅ F(A)"
+
+-- Monad = endofunctor + unit + join
+containment monad_structure : [functor_ct, natural_transformation]
+
+-- Kan extension (the mother of all constructions)
+ξ left_kan : "Lan_K F = colimit construction"
+ξ right_kan : "Ran_K F = limit construction"
+
+-- Composition is associative
+meihua compose(f, g, x) : f(g(x))
+
+incommensurable cat_object, cat_morphism, functor_ct

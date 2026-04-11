@@ -1,0 +1,12 @@
+unit meter
+unit kilogram
+magnitude distance
+magnitude weight
+
+incommensurable distance, weight
+
+meihua add_distance(a : magnitude, b : magnitude) :
+  a + b
+
+meihua scale(val : magnitude, factor) :
+  val * factor

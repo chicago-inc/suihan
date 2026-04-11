@@ -1,0 +1,18 @@
+dimension test_statuses : active | inactive | archived | pending
+
+ξ app_version : "2.1.0"
+ξ max_retries : 5
+
+projection status_label :
+  invariant ξ test_status
+  context ζ locale
+  yields ω label
+  cases:
+    (active, _) -> "Active"
+    (inactive, _) -> "Inactive"
+    (archived, _) -> "Archived"
+    (pending, _) -> "Pending"
+    (_, _) -> "Unknown"
+
+meihua retry_delay(attempt, base_ms) :
+  base_ms * pow(2, attempt)

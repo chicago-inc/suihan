@@ -1,0 +1,47 @@
+-- Edge case: self-referential and recursive structures
+-- Tests: what happens with circular-ish declarations?
+
+unit node
+unit edge
+
+-- A graph is a containment of nodes and edges
+containment graph : [node, edge]
+
+-- An edge connects nodes — this is a self-referential dependency
+dependency connects : node -> node
+  carries: weight
+  structure: directed
+
+-- Recursive meihua (will the compiler accept this?)
+meihua factorial(n) :
+  if n <= 1 then 1 else n * factorial(n - 1)
+
+meihua fibonacci(n) :
+  if n <= 0 then 0 else if n == 1 then 1 else fibonacci(n - 1) + fibonacci(n - 2)
+
+-- Mutual recursion
+meihua is_even(n) :
+  if n == 0 then 1 else is_odd(n - 1)
+
+meihua is_odd(n) :
+  if n == 0 then 0 else is_even(n - 1)
+
+-- A morphism from a type to itself
+morphism identity_morph : node -> node
+  preserves: everything
+  changes: nothing
+
+-- Projection that references its own dimension members in output
+dimension recursion_type : [base_case, recursive_case, mutual]
+
+projection recursion_label :
+  invariant ξ recursion_type
+  context ζ depth
+  yields ω label
+  cases:
+    (base_case, shallow) -> "terminates"
+    (recursive_case, shallow) -> "calls_self"
+    (recursive_case, deep) -> "stack_risk"
+    (mutual, shallow) -> "calls_partner"
+    (mutual, deep) -> "convergence_unclear"
+    (_, _) -> "unknown"

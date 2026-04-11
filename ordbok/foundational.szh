@@ -1,0 +1,27 @@
+unit user
+unit resource
+unit role
+unit event
+
+zero null_user
+zero null_resource
+
+magnitude capacity
+magnitude duration
+
+vector coordinates
+vector time_range
+
+dimension structural_roles : owner | admin | member | pending
+dimension resource_types : group | league | organization
+dimension cognitive_types : genevieve | eleanor | emily | lilith
+
+perpendicular structural_roles, resource_types
+perpendicular user, resource
+
+incommensurable structural_roles, resource_types
+commensurable group, league, organization
+
+ξ app_name : "Spoxis"
+ξ max_scope_layers : 3
+ξ max_role_types : 4

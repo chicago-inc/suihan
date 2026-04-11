@@ -1,0 +1,103 @@
+-- process.szh
+-- Mongwu process scheduler specification.
+-- A process is z(0) — an identity unit with state.
+-- The scheduler is zhulin that transitions through the process_state dimension.
+-- Context switching is a morphism: running → ready, ready → running.
+
+-- ═══════════════════════════════════════════════════
+-- Identity (ξ) — scheduler constants
+-- ═══════════════════════════════════════════════════
+
+ξ max_processes : 16
+ξ stack_pages : 4
+ξ pcb_size : 160
+ξ quantum_ms : 50
+ξ pit_frequency : 1193182
+ξ timer_vector : 32
+
+-- ═══════════════════════════════════════════════════
+-- Dimensions
+-- ═══════════════════════════════════════════════════
+
+dimension process_state : running | ready | blocked | terminated
+dimension scheduler_policy : round_robin
+
+-- ═══════════════════════════════════════════════════
+-- Dependency — process as relational unit
+-- ═══════════════════════════════════════════════════
+
+dependency process : pid -> process_state
+  carries page_table
+  carries stack_pointer
+  carries instruction_pointer
+
+-- ═══════════════════════════════════════════════════
+-- Containment — the process table
+-- ═══════════════════════════════════════════════════
+
+containment process_table : [process, process_state]
+
+-- ═══════════════════════════════════════════════════
+-- Morphisms — state transitions
+-- ═══════════════════════════════════════════════════
+
+morphism context_switch : running -> ready
+  preserves instruction_pointer
+  preserves stack_pointer
+  changes process_state
+
+morphism dispatch : ready -> running
+  preserves instruction_pointer
+  preserves stack_pointer
+  changes process_state
+
+morphism terminate : running -> terminated
+  changes process_state
+
+-- ═══════════════════════════════════════════════════
+-- Projection — scheduler decision
+-- ═══════════════════════════════════════════════════
+
+projection scheduler_action :
+  invariant ξ process_state
+  yields ω action
+  cases:
+    running -> "context_switch"
+    ready -> "dispatch"
+    blocked -> "skip"
+    terminated -> "reclaim"
+
+-- ═══════════════════════════════════════════════════
+-- Meihua (梅花) — pure scheduling math
+-- ═══════════════════════════════════════════════════
+
+-- Round-robin: next PID wraps around
+meihua next_pid(current : magnitude, count : magnitude) :
+  if (current + 1) == count then 0 else current + 1
+
+-- PCB address from PID
+meihua pcb_address(base : magnitude, pid : magnitude) :
+  base + (pid * 160)
+
+-- PIT divisor from desired frequency in Hz
+meihua pit_divisor(target_hz : magnitude) :
+  1193182 / target_hz
+
+-- ═══════════════════════════════════════════════════
+-- Zhulin (竹林) — scheduler control flow
+-- ═══════════════════════════════════════════════════
+
+-- Timer interrupt handler — fires every quantum
+zhulin timer_interrupt :
+  next_pid(current_process, process_count)
+
+-- Create a new process: allocate stack, set entry point, mark ready
+zhulin process_create(entry : magnitude) :
+  entry
+
+-- ═══════════════════════════════════════════════════
+-- Songqiao (松喬) — scheduler configuration
+-- ═══════════════════════════════════════════════════
+
+songqiao scheduler_config :
+  { quantum_ms: 50, max_processes: 16, stack_pages: 4, pit_hz: 20 }

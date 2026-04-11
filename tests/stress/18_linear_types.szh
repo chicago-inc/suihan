@@ -1,0 +1,65 @@
+-- Linear Logic / Linear Haskell / Clean: resources used exactly once
+-- Tests: can suhc express linear/affine/relevant type modalities?
+
+unit linear_resource
+unit affine_resource
+unit relevant_resource
+
+-- Resource usage modalities
+dimension modality : [linear, affine, relevant, unrestricted]
+
+-- Linear type checking rules
+projection usage_check :
+  invariant ξ modality
+  context ζ actual_usage
+  yields ω verdict
+  cases:
+    (linear, used_once) -> "ok"
+    (linear, used_zero) -> "error_not_consumed"
+    (linear, used_many) -> "error_used_twice"
+    (affine, used_once) -> "ok"
+    (affine, used_zero) -> "ok"
+    (affine, used_many) -> "error_used_twice"
+    (relevant, used_once) -> "ok"
+    (relevant, used_zero) -> "error_not_used"
+    (relevant, used_many) -> "ok"
+    (unrestricted, used_once) -> "ok"
+    (unrestricted, used_zero) -> "ok"
+    (unrestricted, used_many) -> "ok"
+    (_, _) -> "unknown"
+
+dimension actual_usage : [used_once, used_zero, used_many]
+
+-- Linear logic connectives
+dimension ll_connective : [tensor_product, par, with_conn, plus_conn, bang, question_mark, one_ll, bottom_ll]
+
+-- Session types (channels with protocol)
+dimension session_state : [send_state, recv_state, choose_state, offer_state, end_state]
+
+projection session_step :
+  invariant ξ session_state
+  context ζ message_available
+  yields ω action
+  cases:
+    (send_state, ready) -> "transmit"
+    (recv_state, ready) -> "receive"
+    (choose_state, ready) -> "select_branch"
+    (offer_state, ready) -> "wait_for_selection"
+    (end_state, ready) -> "close_channel"
+    (send_state, not_ready) -> "block"
+    (recv_state, not_ready) -> "block"
+    (_, _) -> "protocol_error"
+
+dimension message_available : [ready, not_ready]
+
+-- File handle as linear resource (the canonical example)
+morphism open_file : linear_resource -> linear_resource
+  preserves: path
+  changes: state
+
+morphism close_file : linear_resource -> linear_resource
+  preserves: nothing
+  changes: existence
+
+incommensurable linear_resource, affine_resource, relevant_resource
+perpendicular modality, actual_usage

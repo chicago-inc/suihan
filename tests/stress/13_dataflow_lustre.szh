@@ -1,0 +1,45 @@
+-- Lustre/Esterel/Signal: synchronous dataflow, reactive programming
+-- Tests: can suhc express time-indexed streams and clock calculus?
+
+unit stream
+unit clock
+unit node
+
+-- Stream operations
+dimension stream_op : [map_stream, filter_stream, merge_stream, when_op, current_op, pre_op, fby_op]
+
+-- Clock types
+dimension clock_type : [base_clock, sampled_clock, divided_clock, merged_clock]
+
+-- Synchronous semantics: everything happens at clock ticks
+projection stream_at_clock :
+  invariant ξ stream_op
+  context ζ clock_type
+  yields ω evaluation
+  cases:
+    (map_stream, base_clock) -> "apply_each_tick"
+    (filter_stream, sampled_clock) -> "when_true"
+    (merge_stream, base_clock) -> "combine_streams"
+    (when_op, sampled_clock) -> "sample_on_condition"
+    (current_op, sampled_clock) -> "hold_last_value"
+    (pre_op, base_clock) -> "delay_one_tick"
+    (fby_op, base_clock) -> "followed_by"
+    (_, _) -> "clock_mismatch"
+
+-- Node: the unit of computation (like a function but stateful across ticks)
+dependency node_connection : node -> node
+  carries: stream_type
+  structure: dataflow
+
+-- Pre operator: access the previous tick's value
+-- This requires temporal state — can suhc express it?
+meihua pre_value(current, previous) : previous
+meihua followed_by(init, rest) : init
+
+-- Causality check: no instantaneous cycles
+-- A node cannot depend on its own current output
+ξ causality : "no_instantaneous_cycles"
+
+-- Clocked vs unclocked
+perpendicular stream_op, clock_type
+incommensurable stream, clock

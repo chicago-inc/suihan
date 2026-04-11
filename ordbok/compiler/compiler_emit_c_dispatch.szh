@@ -1,0 +1,33 @@
+-- compiler_emit_c_dispatch.szh
+-- Self-describing: the C emitter's own DeclType → handler dispatch.
+-- Emits to include/gen/emit_c_dispatch.h via --target c.
+-- M4 milestone: replaces hand-written switch in emit_c().
+--
+-- Each arm maps a DeclType member to its handler function name.
+-- The C emitter's dispatch mode generates case labels that call
+-- handler(out, d). Empty string = no-op case (break only).
+
+import compiler_decl_types
+
+projection emit_c_dispatch :
+  invariant ξ decl
+  yields ω dispatch
+  cases:
+    dimension -> "emit_c_dimension"
+    dependency -> "emit_c_dependency"
+    projection -> "emit_c_projection"
+    morphism -> "emit_c_morphism"
+    traversal -> "emit_c_traversal"
+    meihua -> "emit_c_meihua"
+    zhulin -> "emit_c_zhulin"
+    songqiao -> "emit_c_songqiao"
+    unit -> "emit_c_unit"
+    magnitude -> "emit_c_magnitude"
+    vector -> "emit_c_vector"
+    kinded_value -> "emit_c_kinded_value"
+    incommensurable -> ""
+    commensurable -> ""
+    perpendicular -> ""
+    import -> "emit_c_import_comment"
+    zero -> ""
+    containment -> ""

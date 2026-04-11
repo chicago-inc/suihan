@@ -1,0 +1,9 @@
+-- compiler_prec_levels.szh
+-- Self-describing: the Pratt climber's precedence levels.
+-- Emits to include/gen/prec_levels.h via --target c.
+-- M5 milestone: replaces anonymous enum in parser.c.
+--
+-- Order is meaningful: higher position = tighter binding.
+-- The enum values are assigned sequentially from 0.
+
+dimension prec : none | enum_prec | arrow | pipe | coalesce | or_prec | and_prec | equality | compare | add | mul | power | cross

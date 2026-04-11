@@ -1,0 +1,76 @@
+-- kernel_os.szh
+-- Mongwu kernel specification.
+-- The first operating system kernel compiled from constitutional ordbok.
+--
+-- This file compiles to x86_64 assembly via: suhc kernel_os.szh --target asm
+-- The kind system maps directly to hardware:
+--   ξ  → ROM (.rodata)     — what does not change
+--   ζ  → computed           — appearance in context
+--   x  → RAM (.bss/.data)  — mutable runtime state
+--   R.k → .text             — instruction stream
+--   ω  → framebuffer        — what the user sees
+
+-- ═══════════════════════════════════════════════════
+-- Identity (ξ) — immutable constants
+-- ═══════════════════════════════════════════════════
+
+ξ kernel_name : "Mongwu"
+ξ kernel_version : "0.1.0"
+ξ vga_base : 0xB8000
+ξ vga_width : 80
+ξ vga_height : 25
+ξ vga_white_on_black : 0x0F
+
+-- ═══════════════════════════════════════════════════
+-- Dimensions — enumerated structural forms
+-- ═══════════════════════════════════════════════════
+
+dimension process_state : running | ready | blocked | terminated
+dimension privilege_level : kernel | user
+
+perpendicular process_state, privilege_level
+
+-- ═══════════════════════════════════════════════════
+-- Meihua (梅花) — pure computation, no side effects
+-- ═══════════════════════════════════════════════════
+
+-- Compute VGA framebuffer offset for (x, y) position
+-- VGA text mode: each cell = 2 bytes (char + attribute)
+meihua vga_offset(x : magnitude, y : magnitude) :
+  vga_base + (y * 160) + (x * 2)
+
+-- ═══════════════════════════════════════════════════
+-- Zhulin (竹林) — control flow, the kernel's heartbeat
+-- ═══════════════════════════════════════════════════
+
+-- Write a single character to VGA text buffer
+-- This is the ω (output) — what the user sees
+zhulin vga_putchar(ch : magnitude, x : magnitude, y : magnitude, color : magnitude) :
+  vga_offset(x, y)
+
+-- Kernel entry point — the first zhulin to execute
+zhulin kernel_main :
+  vga_putchar(77, 0, 0, 15)
+  vga_putchar(111, 1, 0, 15)
+  vga_putchar(110, 2, 0, 15)
+  vga_putchar(103, 3, 0, 15)
+  vga_putchar(119, 4, 0, 15)
+  vga_putchar(117, 5, 0, 15)
+
+-- ═══════════════════════════════════════════════════
+-- Songqiao (松喬) — runtime landscape
+-- Same kernel, different hardware = different songqiao
+-- ═══════════════════════════════════════════════════
+
+-- Generic hardware constants
+songqiao hardware :
+  { video_base: 753664, page_size: 4096, stack_size: 16384 }
+
+-- ═══════════════════════════════════════════════════
+-- Machine-specific songqiao: Acer Aspire E5-576G
+-- Board codename: Ironman_SK (KBL = Kaby Lake platform)
+-- This is the situated context — same kernel, this machine.
+-- ═══════════════════════════════════════════════════
+
+songqiao machine :
+  { board: "Ironman_SK", bios: "Insyde_V1.49", cpu_model: "i5_8250U", cpu_cores: 4, cpu_threads: 8, cpu_clock_mhz: 1800, l2_cache_kb: 1024, l3_cache_kb: 6144, ram_total_mb: 16384, ram_slot_a_mb: 8192, ram_slot_b_mb: 8192, ram_speed_mhz: 1600, gpu_discrete: "MX150", gpu_discrete_vram_mb: 2048, gpu_integrated: "UHD620", gpu_integrated_vram_mb: 1024, display_width: 1920, display_height: 1080, disk_model: "CT1000P3SSD8", disk_size_gb: 932, wifi: "AC3168", ethernet: "Realtek", audio: "Realtek_HD" }

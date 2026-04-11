@@ -1,0 +1,29 @@
+-- compiler_emit_asm_dispatch.szh
+-- x86_64 NASM assembly emitter dispatch table.
+-- Maps DeclType → handler function for bare-metal code generation.
+-- M8 milestone: the compiler targets hardware.
+
+import compiler_decl_types
+
+projection emit_asm_dispatch :
+  invariant ξ decl
+  yields ω dispatch
+  cases:
+    dimension -> "emit_asm_dimension"
+    dependency -> ""
+    projection -> "emit_asm_projection"
+    morphism -> ""
+    traversal -> ""
+    meihua -> "emit_asm_meihua"
+    zhulin -> "emit_asm_zhulin"
+    songqiao -> "emit_asm_songqiao"
+    unit -> ""
+    magnitude -> ""
+    vector -> ""
+    kinded_value -> "emit_asm_kinded_value"
+    incommensurable -> ""
+    commensurable -> ""
+    perpendicular -> ""
+    import -> ""
+    zero -> ""
+    containment -> ""

@@ -1,0 +1,15 @@
+traversal resolve_access :
+  identity ξ user_id
+    fetch_user(user_id)
+  context ζ role
+    get_role(user_id, resource_id)
+  data x permissions
+    fetch_permissions(resource_id)
+  operator R.k filter
+    match role
+      owner -> full_access(permissions)
+      admin -> admin_access(permissions)
+      member -> member_access(permissions)
+      _ -> read_only(permissions)
+  output ω access_level
+  cast ΔR.k role_escalation_risk

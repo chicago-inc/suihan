@@ -1,0 +1,36 @@
+-- compiler_token_prec.szh
+-- Self-describing: the Pratt climber's infix token → precedence mapping.
+-- Emits to include/gen/token_prec.h via --target c.
+-- M5 milestone: replaces most of infix_prec() in parser.c.
+--
+-- Note: TOK_PIPE has conditional logic (length check) that
+-- cannot be encoded as a pure projection. The hand-written
+-- wrapper handles that edge case; this projection handles
+-- the clean token → prec mappings.
+
+import compiler_token_types
+import compiler_prec_levels
+
+projection infix_token_prec :
+  invariant ξ tok
+  yields ω prec_assignment
+  cases:
+    arrow -> "arrow"
+    pipe_arrow -> "pipe"
+    double_question -> "coalesce"
+    or_or -> "or_prec"
+    and_and -> "and_prec"
+    double_equals -> "equality"
+    bang_eq -> "equality"
+    lt -> "compare"
+    gt -> "compare"
+    lt_eq -> "compare"
+    gt_eq -> "compare"
+    plus -> "add"
+    minus -> "add"
+    star -> "mul"
+    slash -> "mul"
+    percent -> "mul"
+    caret -> "power"
+    cross -> "cross"
+    _ -> "none"

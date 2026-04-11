@@ -1,0 +1,18 @@
+dimension colors : red | green | blue
+dimension sizes : small | medium | large
+
+projection color_label :
+  invariant ξ color
+  context ζ size
+  yields ω label
+  cases:
+    (red, small) -> "Small Red"
+    (red, medium) -> "Medium Red"
+    (red, large) -> "Large Red"
+    (green, small) -> "Small Green"
+    (green, medium) -> "Medium Green"
+    (green, large) -> "Large Green"
+    (blue, small) -> "Small Blue"
+    (blue, medium) -> "Medium Blue"
+    (blue, large) -> "Large Blue"
+    (_, _) -> "Unknown"

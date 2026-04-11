@@ -1,0 +1,58 @@
+-- Pure Lambda Calculus + System F + Calculus of Constructions
+-- Tests: the minimal computational substrate — can suhc express it?
+
+unit variable
+unit abstraction
+unit application
+
+-- Lambda terms
+dimension term_type : [var_term, abs_term, app_term]
+
+-- Reduction strategies
+dimension reduction : [beta, eta, alpha, delta, normal_order, applicative_order, call_by_need]
+
+projection reduce_step :
+  invariant ξ reduction
+  context ζ term_type
+  yields ω result
+  cases:
+    (beta, app_term) -> "substitute"
+    (eta, abs_term) -> "simplify"
+    (alpha, abs_term) -> "rename_bound"
+    (normal_order, app_term) -> "leftmost_outermost"
+    (applicative_order, app_term) -> "leftmost_innermost"
+    (call_by_need, app_term) -> "share_and_delay"
+    (_, _) -> "no_redex"
+
+-- Church encodings
+meihua church_succ(n, f, x) : f(n)
+meihua church_add(m, n, f, x) : m
+meihua church_mul(m, n, f) : m
+
+-- System F: polymorphic lambda calculus (type abstraction)
+dimension system_f_term : [term_abs, term_app, type_abs, type_app]
+
+-- De Bruijn indices (nameless representation)
+meihua debruijn_shift(d, cutoff, term) :
+  if term < cutoff then term else term + d
+
+-- Normalization
+dimension normalization : [strongly_normalizing, weakly_normalizing, non_normalizing]
+
+-- Simply typed lambda calculus: every well-typed term normalizes
+ξ strong_normalization : "all well-typed STLC terms terminate"
+
+-- Untyped lambda calculus: Omega = (λx.xx)(λx.xx) diverges
+ξ omega_diverges : "(lambda x . x x)(lambda x . x x) -> infinite loop"
+
+-- Scott encoding (alternative to Church)
+meihua scott_zero(z, s) : z
+meihua scott_succ(n, z, s) : s
+
+-- Combinatory logic (SKI)
+ξ s_combinator : "S f g x = f x (g x)"
+ξ k_combinator : "K x y = x"
+ξ i_combinator : "I x = x"
+
+incommensurable variable, abstraction, application
+perpendicular term_type, reduction

@@ -1,0 +1,33 @@
+-- compiler_math_fn_c.szh
+-- Self-describing: math function → C stdlib name mapping.
+-- Emits to include/gen/math_fn_c.h via --target c.
+-- M5 milestone: replaces strcmp chain in emit_c.c:expr_to_c().
+--
+-- Maps ordbok math function names to their C standard library
+-- equivalents. Most are identity mappings; notable exceptions:
+--   abs → fabs (C uses fabs for doubles)
+--   min → fmin, max → fmax (C math.h names)
+
+import compiler_math_fns
+
+projection math_fn_c :
+  invariant ξ math_fn
+  yields ω label
+  cases:
+    sqrt -> "sqrt"
+    abs -> "fabs"
+    floor -> "floor"
+    ceil -> "ceil"
+    round -> "round"
+    sin -> "sin"
+    cos -> "cos"
+    tan -> "tan"
+    acos -> "acos"
+    asin -> "asin"
+    atan -> "atan"
+    atan2 -> "atan2"
+    pow -> "pow"
+    log -> "log"
+    log2 -> "log2"
+    min -> "fmin"
+    max -> "fmax"

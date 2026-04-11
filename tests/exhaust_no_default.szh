@@ -1,0 +1,9 @@
+dimension test_roles : alpha | beta | gamma
+
+projection no_default_proj :
+  invariant ξ test_role
+  context ζ action
+  yields ω result
+  cases:
+    (alpha, view) -> "a"
+    (beta, view) -> "b"

@@ -1,0 +1,32 @@
+-- Edge case: all reserved words as dimension members or identifiers
+-- Which keywords can be used as names and which can't?
+
+-- These are keywords used in traversal sections:
+-- identity, context, data, operator, output, cast
+-- Can they appear as dimension members?
+
+dimension traversal_keywords : [ident, ctx, dat, oper, out, cst]
+
+-- These are declaration keywords:
+-- unit, dimension, projection, traversal, dependency, containment,
+-- morphism, meihua, zhulin, songqiao, incommensurable, commensurable,
+-- perpendicular, import, magnitude, vector, zero
+
+-- Test: can 'if', 'then', 'else', 'match' be dimension members?
+dimension control_keywords : [if_kw, then_kw, else_kw, match_kw]
+
+-- Test: can kind sigils be dimension members?
+-- ξ, ζ, x, ω are kind sigils
+dimension sigil_test : [xi_val, zeta_val, x_val, omega_val]
+
+-- Test: numeric-looking identifiers
+meihua test_names(abc123, x_1, y_2) : abc123 + x_1 + y_2
+
+-- Test: underscores
+meihua underscore_test(_leading, trailing_, mid_dle) : _leading + trailing_ + mid_dle
+
+-- Test: single character names
+meihua single_chars(a, b, c) : a + b + c
+
+-- Test: very long identifier
+meihua this_is_a_very_long_function_name_that_tests_identifier_length_limits(val) : val

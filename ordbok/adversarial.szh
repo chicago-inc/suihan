@@ -1,0 +1,38 @@
+import foundational
+
+dimension threat_levels : probe | scan | exploit | flood
+dimension response_modes : observe | degrade | block | report
+
+perpendicular threat_levels, response_modes
+
+ξ first_hit_fixes_identity : "z(0) fixed by first transaction — invariant thereafter"
+ξ cross_context_persistence : "same IP across honeypot + API = same entity"
+ξ graduated_not_announced : "silent degradation, not announced rejection"
+ξ false_positive_threshold : 0.05
+
+projection adversarial_response :
+  invariant ξ threat_level
+  context ζ signal_count
+  yields ω response
+  cases:
+    (probe, _) -> observe
+    (scan, _) -> degrade
+    (exploit, _) -> block
+    (flood, _) -> block
+    (_, _) -> report
+
+projection rate_limit_policy :
+  invariant ξ threat_level
+  yields ω rate_limit
+  cases:
+    probe -> "1000/min"
+    scan -> "100/min"
+    exploit -> "10/min"
+    flood -> "0/min"
+    _ -> "500/min"
+
+meihua graduated_response_delay(threat_score : magnitude, base_delay : magnitude) :
+  if threat_score > 0.8 then base_delay * 10 else if threat_score > 0.5 then base_delay * 3 else base_delay
+
+meihua false_positive_cost(block_count : magnitude, total_requests : magnitude) :
+  if total_requests == 0 then 0 else block_count / total_requests

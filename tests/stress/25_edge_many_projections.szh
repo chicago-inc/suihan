@@ -1,0 +1,70 @@
+-- Edge case: many projections over the same dimensions
+-- Tests: cross-product exhaustiveness, perpendicularity with multiple projections
+
+dimension color : [red, green, blue, yellow, cyan, magenta, white, black]
+dimension shape : [circle, square, triangle, hexagon, star]
+dimension material : [wood, metal, glass, plastic, stone]
+
+perpendicular color, shape, material
+
+-- 8 projections over the same pair
+projection color_name :
+  invariant ξ color
+  context ζ language
+  yields ω label
+  cases:
+    (red, english) -> "Red"
+    (green, english) -> "Green"
+    (blue, english) -> "Blue"
+    (yellow, english) -> "Yellow"
+    (_, _) -> "Color"
+
+projection color_hex :
+  invariant ξ color
+  context ζ format
+  yields ω code
+  cases:
+    (red, hex) -> "#FF0000"
+    (green, hex) -> "#00FF00"
+    (blue, hex) -> "#0000FF"
+    (yellow, hex) -> "#FFFF00"
+    (cyan, hex) -> "#00FFFF"
+    (magenta, hex) -> "#FF00FF"
+    (white, hex) -> "#FFFFFF"
+    (black, hex) -> "#000000"
+    (_, _) -> "#000000"
+
+projection shape_sides :
+  invariant ξ shape
+  context ζ precision
+  yields ω count
+  cases:
+    (circle, exact) -> "infinity"
+    (square, exact) -> "4"
+    (triangle, exact) -> "3"
+    (hexagon, exact) -> "6"
+    (star, exact) -> "10"
+    (_, _) -> "unknown"
+
+projection material_density :
+  invariant ξ material
+  context ζ unit_system
+  yields ω density
+  cases:
+    (wood, metric) -> "500"
+    (metal, metric) -> "7800"
+    (glass, metric) -> "2500"
+    (plastic, metric) -> "950"
+    (stone, metric) -> "2600"
+    (_, _) -> "0"
+
+-- Cross-dimensional projection
+projection object_label :
+  invariant ξ color
+  context ζ shape
+  yields ω description
+  cases:
+    (red, circle) -> "Red Circle"
+    (blue, square) -> "Blue Square"
+    (green, triangle) -> "Green Triangle"
+    (_, _) -> "Object"

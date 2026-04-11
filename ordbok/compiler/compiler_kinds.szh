@@ -1,0 +1,6 @@
+-- compiler_kinds.szh
+-- Self-describing: the compiler's own Kind enum as an ordbok dimension.
+-- Emits to include/gen/kinds.h via --target c.
+-- M1 milestone: replaces hand-written Kind enum in ast.h.
+
+dimension kind : xi | zeta | x | rk | omega | delta_rk | inferred | none

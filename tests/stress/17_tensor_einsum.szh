@@ -1,0 +1,59 @@
+-- Tensor calculus / Einstein notation / NumPy einsum
+-- Tests: can suhc express index contraction and broadcasting?
+
+unit tensor
+unit index
+unit contraction
+
+-- Tensor rank
+dimension tensor_rank : [rank_0, rank_1, rank_2, rank_3, rank_4]
+
+-- Index position (contravariant vs covariant)
+dimension index_position : [upper, lower, contracted]
+
+-- Einstein summation convention
+projection einsum_rule :
+  invariant ξ index_position
+  context ζ repetition
+  yields ω operation
+  cases:
+    (upper, once) -> "free_index"
+    (lower, once) -> "free_index"
+    (upper, twice) -> "contract_sum"
+    (lower, twice) -> "contract_sum"
+    (contracted, twice) -> "trace"
+    (_, more) -> "invalid_index"
+    (_, _) -> "free_index"
+
+dimension repetition : [once, twice, more]
+
+-- Broadcasting rules (NumPy-style)
+dimension broadcast_rule : [same_shape, scalar_expand, trailing_expand, incompatible]
+
+projection broadcast_result :
+  invariant ξ broadcast_rule
+  context ζ operation_type
+  yields ω output_shape
+  cases:
+    (same_shape, elementwise) -> "same_shape"
+    (scalar_expand, elementwise) -> "expand_scalar"
+    (trailing_expand, elementwise) -> "pad_dimensions"
+    (incompatible, elementwise) -> "error"
+    (same_shape, matmul) -> "contract_inner"
+    (_, _) -> "error"
+
+dimension operation_type : [elementwise, matmul, outer_product, reduction]
+
+-- Common tensor operations
+meihua trace_2d(a) : a
+meihua contract(a, b, axis) : a * b
+meihua outer(a, b) : a * b
+
+-- Christoffel symbols (differential geometry)
+meihua christoffel(metric, coord) : metric
+
+-- Metric tensor
+ξ minkowski_signature : "diag(-1, 1, 1, 1)"
+
+incommensurable tensor, index
+perpendicular tensor_rank, index_position

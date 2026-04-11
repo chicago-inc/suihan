@@ -1,0 +1,8 @@
+meihua add(a, b) :
+  a + b
+
+meihua double(x) :
+  x * 2
+
+meihua bad_caller(p, q) :
+  add(p, q, 99) + double(p, q)

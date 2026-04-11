@@ -1,0 +1,67 @@
+-- SQL/Relational Algebra: sets, joins, aggregation, normal forms
+-- Tests: can suhc express relational operations and set theory?
+
+unit relation
+unit tuple
+unit attribute
+
+-- Normal forms as dimension
+dimension normal_form : [unnormalized, first_nf, second_nf, third_nf, bcnf, fourth_nf, fifth_nf]
+
+-- Join types
+dimension join_type : [inner_join, left_join, right_join, full_join, cross_join, natural_join, semi_join, anti_join]
+
+-- Relational operations as projections
+projection join_semantics :
+  invariant ξ join_type
+  context ζ null_handling
+  yields ω output_shape
+  cases:
+    (inner_join, strict) -> "intersection"
+    (left_join, nullable) -> "left_preserved"
+    (right_join, nullable) -> "right_preserved"
+    (full_join, nullable) -> "union_all"
+    (cross_join, strict) -> "cartesian_product"
+    (natural_join, strict) -> "shared_attributes"
+    (semi_join, strict) -> "exists_filter"
+    (anti_join, strict) -> "not_exists_filter"
+    (_, _) -> "unknown_join"
+
+-- Aggregate functions
+dimension aggregate_fn : [count_fn, sum_fn, avg_fn, min_fn, max_fn, group_concat]
+
+-- Functional dependency (the basis of normalization)
+dependency functional_dep : attribute -> attribute
+  carries: determinant
+  structure: closure
+
+-- ACID properties as ξ
+ξ atomicity : "all_or_nothing"
+ξ consistency : "valid_state_to_valid_state"
+ξ isolation_level : "serializable | repeatable_read | read_committed | read_uncommitted"
+ξ durability : "committed_survives_crash"
+
+-- Window functions: computation over a frame
+meihua row_number(partition, ordering) : partition
+meihua running_sum(value, frame) : value
+
+-- CTE (recursive queries)
+meihua recursive_cte(base_case, recursive_step, depth) :
+  if depth == 0 then base_case else recursive_step
+
+-- NULL semantics (three-valued logic)
+dimension ternary_logic : [true_3vl, false_3vl, unknown_3vl]
+
+projection null_comparison :
+  invariant ξ ternary_logic
+  context ζ operator
+  yields ω result
+  cases:
+    (true_3vl, equals) -> "true_3vl"
+    (false_3vl, equals) -> "false_3vl"
+    (unknown_3vl, equals) -> "unknown_3vl"
+    (unknown_3vl, is_null) -> "true_3vl"
+    (true_3vl, is_null) -> "false_3vl"
+    (_, _) -> "unknown_3vl"
+
+incommensurable relation, tuple, attribute

@@ -1,0 +1,57 @@
+-- Prolog: logic programming, unification, backtracking, cut
+-- Tests: can suhc express declarative logic and resolution?
+
+unit term
+unit clause
+unit goal
+
+-- Facts as ξ declarations
+ξ parent_of : "parent(tom, bob)"
+ξ parent_of_2 : "parent(bob, ann)"
+
+-- Rules as projections (if X then Y)
+dimension relation : [parent, grandparent, sibling, ancestor]
+dimension truth_value : [true_val, false_val, unknown]
+
+projection family_relation :
+  invariant ξ relation
+  context ζ query_depth
+  yields ω resolution
+  cases:
+    (parent, shallow) -> "direct_lookup"
+    (grandparent, shallow) -> "two_step_join"
+    (sibling, shallow) -> "shared_parent"
+    (ancestor, deep) -> "recursive_search"
+    (_, _) -> "unresolvable"
+
+-- Unification as morphism
+morphism unify : term -> term
+  preserves: structure
+  changes: bindings
+
+-- Cut as a control flow concept
+-- Can suhc express "stop backtracking here"?
+meihua evaluate_goal(goal, depth) :
+  if depth > 100 then "cut" else "continue"
+
+-- Backtracking as traversal
+traversal resolve_query :
+  identity ξ :
+    knowledge_base
+  context ζ :
+    query_bindings
+  data x :
+    substitution_set
+  operator R.k :
+    unify(goal, clause_head)
+  output ω :
+    answer_set
+  cast ΔR.k :
+    infinite_recursion_risk
+
+-- List processing (Prolog's core data structure)
+meihua head_of(list) :
+  match list { empty -> "nil", _ -> "car" }
+
+meihua length_of(list, acc) :
+  if list == "nil" then acc else length_of("cdr", acc + 1)

@@ -1,0 +1,37 @@
+import foundational
+import equipment
+
+dimension computational_classes : genevieve | eleanor | emily | lilith
+dimension decision_actions : act | surface | present | defer
+
+perpendicular computational_classes, decision_actions
+
+ξ oracle_boundary : "if two reasonable people would decide differently, present — do not act"
+ξ two_reasonable_people_test : "the formal definition of crossing the oracle ceiling"
+ξ lilith_is_outside : "Type-0 — not a mechanism inside the system"
+ξ emily_is_expensive : "Type-1 — most expensive cognitive resource"
+
+projection ceiling_response :
+  invariant ξ computational_class
+  yields ω action
+  cases:
+    genevieve -> act
+    eleanor -> act
+    emily -> surface
+    lilith -> defer
+    _ -> present
+
+projection automation_boundary :
+  invariant ξ cross_ref_count
+  yields ω classification
+  cases:
+    0 -> genevieve
+    1 -> eleanor
+    2 -> emily
+    _ -> lilith
+
+meihua classify_decision_complexity(signal_count : magnitude, source_count : magnitude) :
+  if source_count > 3 then 4 else if source_count > 1 then 3 else if signal_count > 10 then 2 else 1
+
+meihua should_defer(complexity_class : magnitude, threshold : magnitude) :
+  if complexity_class > threshold then 1 else 0

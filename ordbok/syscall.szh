@@ -1,0 +1,78 @@
+-- syscall.szh
+-- Mongwu syscall specification.
+-- The syscall interface is the constitutional boundary between
+-- user (privilege_level: user) and kernel (privilege_level: kernel).
+-- Every kernel service is gated through this interface.
+-- No backdoors. No shared memory tricks. The ordbok governs the gate.
+
+-- ═══════════════════════════════════════════════════
+-- Identity (ξ) — syscall constants
+-- ═══════════════════════════════════════════════════
+
+ξ syscall_vector : 128
+ξ max_syscalls : 8
+
+-- ═══════════════════════════════════════════════════
+-- Dimensions — syscall identifiers
+-- ═══════════════════════════════════════════════════
+
+dimension syscall_id : sys_write | sys_exit | sys_yield | sys_getpid | sys_alloc | sys_free | sys_sleep | sys_time
+
+-- sys_write  : write to VGA (kernel mediates framebuffer access)
+-- sys_exit   : terminate calling process (morphism: running → terminated)
+-- sys_yield  : voluntary context switch (morphism: running → ready)
+-- sys_getpid : return caller's PID (read own z(0))
+-- sys_alloc  : request page from kernel allocator
+-- sys_free   : return page to kernel allocator
+-- sys_sleep  : block for N ticks (morphism: running → blocked)
+-- sys_time   : read tick count (kernel clock)
+
+-- ═══════════════════════════════════════════════════
+-- Projection — syscall dispatch
+-- Maps syscall number to handler
+-- ═══════════════════════════════════════════════════
+
+projection syscall_dispatch :
+  invariant ξ syscall_id
+  yields ω handler
+  cases:
+    sys_write -> "handle_write"
+    sys_exit -> "handle_exit"
+    sys_yield -> "handle_yield"
+    sys_getpid -> "handle_getpid"
+    sys_alloc -> "handle_alloc"
+    sys_free -> "handle_free"
+    sys_sleep -> "handle_sleep"
+    sys_time -> "handle_time"
+
+-- ═══════════════════════════════════════════════════
+-- Meihua (梅花) — syscall validation (pure)
+-- ═══════════════════════════════════════════════════
+
+-- Validate syscall number is in range
+meihua valid_syscall(id : magnitude) :
+  if id < 8 then 1 else 0
+
+-- Validate write address is in user-accessible range
+-- User processes cannot write below 4194304 (kernel + bitmap + PCBs)
+meihua valid_user_addr(addr : magnitude) :
+  if addr > 4194303 then 1 else 0
+
+-- ═══════════════════════════════════════════════════
+-- Zhulin (竹林) — syscall entry/exit
+-- ═══════════════════════════════════════════════════
+
+-- Syscall entry: save user state, switch to kernel stack, dispatch
+zhulin syscall_entry :
+  valid_syscall(0)
+
+-- Syscall return: restore user state, switch to user stack, sysret
+zhulin syscall_return :
+  0
+
+-- ═══════════════════════════════════════════════════
+-- Songqiao (松喬) — syscall configuration
+-- ═══════════════════════════════════════════════════
+
+songqiao syscall_config :
+  { int_vector: 128, max_calls: 8, kernel_stack_pages: 2 }

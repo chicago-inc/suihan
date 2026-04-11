@@ -1,0 +1,33 @@
+-- compiler_emit_ts_dispatch.szh
+-- Self-describing: the TS emitter's DeclType → handler dispatch.
+-- Emits to include/gen/emit_ts_dispatch.h via --target c.
+-- M4 milestone: replaces hand-written switch in emit_ts().
+--
+-- Each arm maps a DeclType member to its handler function name.
+-- Handlers with non-standard signatures get dispatch wrappers
+-- with the uniform (FILE*, Decl*) calling convention.
+
+import compiler_decl_types
+
+projection emit_ts_dispatch :
+  invariant ξ decl
+  yields ω dispatch
+  cases:
+    unit -> "emit_unit"
+    magnitude -> "emit_unit"
+    vector -> "emit_unit"
+    kinded_value -> "emit_kinded_value_ts"
+    dimension -> "emit_dimension"
+    perpendicular -> "emit_perpendicular"
+    incommensurable -> "emit_relation"
+    commensurable -> "emit_relation"
+    dependency -> "emit_dependency_ts"
+    morphism -> "emit_morphism"
+    projection -> "emit_projection_ts"
+    traversal -> "emit_traversal"
+    meihua -> "emit_meihua"
+    songqiao -> "emit_songqiao"
+    zhulin -> "emit_meihua"
+    import -> ""
+    zero -> ""
+    containment -> ""

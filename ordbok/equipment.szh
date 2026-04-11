@@ -1,0 +1,49 @@
+import foundational
+
+dimension cognitive_mechanisms : genevieve | eleanor | emily | lilith
+
+perpendicular cognitive_mechanisms, structural_roles
+
+ξ genevieve_cost : 0
+ξ eleanor_cost : 1
+ξ emily_cost : 3
+ξ lilith_cost : "infinite — outside the system"
+
+ξ small_number_constraint : 3
+
+ζ cognitive_load : "quadratic: (a + b) ^ 2"
+
+traversal resolve_tool_readiness :
+  identity ξ tool_id
+    fetch_tool(tool_id)
+  context ζ user_task
+    classify_task(user_task)
+  data x tool_state
+    fetch_tool_state(tool_id) |> check_availability
+  operator R.k evaluate
+    match tool_state
+      ready -> withdraw(tool)
+      conspicuous -> flag_malfunction(tool)
+      obtrusive -> flag_absence(tool)
+      obstinate -> flag_blockage(tool)
+  output ω readiness
+  cast ΔR.k unperceived_breakdowns
+
+songqiao cognitive_cost_config(mechanism) :
+  match mechanism { genevieve -> 0, eleanor -> 1, emily -> 3, _ -> 99 }
+
+traversal resolve_oracle_boundary :
+  identity ξ decision_id
+    fetch_decision(decision_id)
+  context ζ decision_type
+    classify_computational_class(decision)
+  data x signals
+    gather_signals(decision_id) |> normalize
+  operator R.k classify
+    match decision_type
+      genevieve -> act(signals)
+      eleanor -> act(signals)
+      emily -> act_with_reasoning(signals)
+      lilith -> present(signals)
+  output ω recommendation
+  cast ΔR.k misclassification_risk

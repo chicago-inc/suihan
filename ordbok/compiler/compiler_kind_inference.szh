@@ -1,0 +1,38 @@
+-- compiler_kind_inference.szh
+-- Self-describing: the compiler's DeclType → Kind mapping.
+-- Emits to include/gen/kind_inference.h via --target c.
+-- M3 milestone: replaces hand-written infer_decl_kind() in kindcheck.c.
+--
+-- This is the first behavioral projection: it encodes what the compiler
+-- KNOWS about the relationship between declaration types and the unified
+-- equation's kind system. The mapping derives from the constitution:
+--   ξ = identity (immutable structure)
+--   ζ = shape (computed appearance)
+--   x = variable (runtime data)
+--   R.k = operator (pipeline traversal)
+
+import compiler_decl_types
+import compiler_kinds
+
+projection infer_decl_kind :
+  invariant ξ decl
+  yields ω kind_assignment
+  cases:
+    unit -> "xi"
+    zero -> "xi"
+    magnitude -> "x"
+    vector -> "x"
+    dimension -> "xi"
+    dependency -> "xi"
+    containment -> "xi"
+    morphism -> "rk"
+    projection -> "rk"
+    traversal -> "rk"
+    incommensurable -> "xi"
+    commensurable -> "xi"
+    perpendicular -> "xi"
+    kinded_value -> "inferred"
+    import -> "none"
+    meihua -> "xi"
+    zhulin -> "rk"
+    songqiao -> "zeta"

@@ -1,0 +1,53 @@
+-- Pi calculus/CSP/CCS: process algebra, channel communication, bisimulation
+-- Tests: can suhc express mobile processes and name passing?
+
+unit channel
+unit pi_process
+unit name
+
+-- Process constructors
+dimension process_form : [nil_proc, send_proc, receive_proc, parallel, choice, restriction, replication]
+
+-- Channel operations
+projection channel_action :
+  invariant ξ process_form
+  context ζ channel_state
+  yields ω behavior
+  cases:
+    (nil_proc, any_state) -> "terminated"
+    (send_proc, open) -> "output_name"
+    (receive_proc, open) -> "input_name"
+    (parallel, open) -> "concurrent_composition"
+    (choice, open) -> "nondeterministic_select"
+    (restriction, open) -> "create_fresh_name"
+    (replication, open) -> "infinite_copies"
+    (send_proc, closed) -> "blocked"
+    (receive_proc, closed) -> "blocked"
+    (_, _) -> "stuck"
+
+dimension channel_state : [open, closed, any_state]
+
+-- Structural congruence (processes that are the same up to rearrangement)
+-- P | Q ≡ Q | P (commutativity)
+-- (P | Q) | R ≡ P | (Q | R) (associativity)
+-- P | 0 ≡ P (identity)
+ξ parallel_commutative : "P | Q = Q | P"
+ξ parallel_associative : "(P | Q) | R = P | (Q | R)"
+ξ parallel_identity : "P | 0 = P"
+
+-- Bisimulation: two processes are equivalent if they can simulate each other
+morphism bisimulate : pi_process -> pi_process
+  preserves: observable_behavior
+  changes: internal_structure
+
+-- Name mobility: channels can be sent over channels
+-- This is what makes pi-calculus "mobile"
+dependency name_passing : channel -> channel
+  carries: name
+  structure: scope_extrusion
+
+-- Reduction rules
+meihua reduce(sender, receiver) :
+  if sender == receiver then "synchronize" else "blocked"
+
+incommensurable channel, pi_process

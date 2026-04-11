@@ -1,0 +1,13 @@
+import foundational
+
+dimension source_origins : null_source | system | user_input | network | storage | derived
+dimension kind_fields : xi | zeta | x | rk | omega | delta_rk
+
+perpendicular source_origins, kind_fields
+
+ξ encoding_bits : 256
+ξ kind_field_width : 6
+ξ source_field_width : 6
+
+meihua binding_proof(kind_hash : magnitude, value_hash : magnitude, source_hash : magnitude) :
+  (kind_hash * 2654435761) + (value_hash * 2246822519) + (source_hash * 3266489917)

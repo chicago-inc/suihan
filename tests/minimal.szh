@@ -1,0 +1,5 @@
+-- minimal.szh
+-- The smallest valid suihan program.
+
+unit thing
+ξ axiom : α

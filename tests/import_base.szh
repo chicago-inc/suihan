@@ -1,0 +1,6 @@
+unit user
+unit resource
+
+dimension roles : owner | admin | member | pending
+
+perpendicular user, resource

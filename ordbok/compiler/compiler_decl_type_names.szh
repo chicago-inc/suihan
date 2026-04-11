@@ -1,0 +1,29 @@
+-- compiler_decl_type_names.szh
+-- Self-describing: the compiler's DeclType display strings.
+-- Emits to include/gen/decl_type_names.h via --target c.
+-- M2 milestone: replaces hand-written decl_type_name() in ast.c.
+
+import compiler_decl_types
+
+projection decl_type_name :
+  invariant ξ decl
+  yields ω label
+  cases:
+    unit -> "unit"
+    zero -> "zero"
+    magnitude -> "magnitude"
+    vector -> "vector"
+    dimension -> "dimension"
+    dependency -> "dependency"
+    containment -> "containment"
+    morphism -> "morphism"
+    projection -> "projection"
+    traversal -> "traversal"
+    incommensurable -> "incommensurable"
+    commensurable -> "commensurable"
+    perpendicular -> "perpendicular"
+    kinded_value -> "kinded_value"
+    meihua -> "meihua"
+    zhulin -> "zhulin"
+    songqiao -> "songqiao"
+    import -> "import"

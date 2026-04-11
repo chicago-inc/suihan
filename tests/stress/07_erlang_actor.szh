@@ -1,0 +1,65 @@
+-- Erlang/OTP: actors, message passing, supervision trees, hot code reload
+-- Tests: can suhc express concurrent processes and fault tolerance?
+
+unit process
+unit supervisor
+unit gen_server
+unit message_erlang
+
+-- Process lifecycle
+dimension process_state : [running, waiting, suspended, exited]
+
+-- Supervision strategy
+dimension restart_strategy : [one_for_one, one_for_all, rest_for_one, simple_one_for_one]
+
+-- Message patterns as projection
+projection handle_message :
+  invariant ξ message_type
+  context ζ process_state
+  yields ω response
+  cases:
+    (call, running) -> "reply"
+    (cast, running) -> "noreply"
+    (info, running) -> "handle_info"
+    (call, waiting) -> "queue"
+    (cast, exited) -> "dead_letter"
+    (_, _) -> "drop"
+
+dimension message_type : [call, cast, info, system_msg]
+
+-- Supervision tree as containment
+containment supervision_tree : [supervisor, gen_server, process]
+
+-- Fault tolerance: let it crash philosophy
+projection crash_response :
+  invariant ξ restart_strategy
+  context ζ failure_type
+  yields ω action
+  cases:
+    (one_for_one, transient) -> "restart_child"
+    (one_for_one, permanent) -> "restart_child"
+    (one_for_all, transient) -> "restart_all"
+    (one_for_all, permanent) -> "restart_all"
+    (rest_for_one, transient) -> "restart_rest"
+    (simple_one_for_one, transient) -> "restart_child"
+    (_, temporary) -> "do_not_restart"
+    (_, _) -> "escalate"
+
+-- Hot code reload: two versions running simultaneously
+dimension code_version : [current, old]
+
+-- Pattern matching on messages (Erlang's core mechanism)
+meihua match_message(msg, pattern) :
+  match msg { ping -> "pong", stop -> "ok", _ -> "unknown" }
+
+-- Process linking
+dependency link : process -> process
+  carries: exit_signal
+  structure: bidirectional
+
+-- OTP behaviours as morphisms
+morphism init_server : process -> gen_server
+  preserves: pid
+  changes: behaviour
+
+incommensurable process, message_erlang

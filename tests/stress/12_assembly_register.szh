@@ -1,0 +1,51 @@
+-- Assembly/Machine Code: registers, memory, instructions, addressing modes
+-- Tests: can suhc express hardware-level concepts?
+
+unit register
+unit memory
+unit instruction
+
+-- Register file
+dimension x86_register : [rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8, r9, r10, r11, r12, r13, r14, r15]
+
+-- Addressing modes
+dimension addressing_mode : [immediate, register_direct, register_indirect, displacement, scaled_index, rip_relative]
+
+-- Instruction categories
+dimension instruction_class : [arithmetic, logic, control, memory_op, simd, system]
+
+projection instruction_encoding :
+  invariant ξ instruction_class
+  context ζ addressing_mode
+  yields ω encoding
+  cases:
+    (arithmetic, immediate) -> "op_imm"
+    (arithmetic, register_direct) -> "op_reg_reg"
+    (logic, immediate) -> "logic_imm"
+    (control, immediate) -> "jmp_rel"
+    (control, register_indirect) -> "jmp_indirect"
+    (memory_op, displacement) -> "mov_disp"
+    (memory_op, scaled_index) -> "mov_sib"
+    (simd, register_direct) -> "vex_prefix"
+    (_, _) -> "general_encoding"
+
+-- Pipeline stages
+dimension pipeline_stage : [fetch, decode, execute, memory_access, writeback]
+
+-- Memory hierarchy
+dimension cache_level : [l1_cache, l2_cache, l3_cache, main_memory, disk_swap]
+
+-- Flags register
+dimension cpu_flag : [zero_flag, carry_flag, sign_flag, overflow_flag, parity_flag, direction_flag]
+
+-- Branch prediction
+meihua predict_branch(history, pattern) :
+  if history > 2 then "taken" else "not_taken"
+
+-- Cache line behavior
+meihua cache_hit(address, line_size) :
+  if address < line_size then "hit" else "miss"
+
+incommensurable register, memory, instruction
+perpendicular x86_register, addressing_mode
+perpendicular instruction_class, pipeline_stage

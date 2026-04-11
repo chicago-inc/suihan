@@ -1,0 +1,58 @@
+-- Forth: stack-based, concatenative, words, compile-time metaprogramming
+-- Tests: can suhc express stack-oriented computation and word composition?
+
+unit word
+unit stack
+unit dictionary
+
+-- Stack effects as dimension
+dimension stack_effect : [push, pop, swap, dup, drop, over, rot]
+
+-- Words compose by concatenation, not application
+-- Can we express this?
+morphism compose : word -> word
+  preserves: stack_effect
+  changes: definition
+
+-- Dictionary as containment
+containment forth_dictionary : [word, stack, dictionary]
+
+-- Stack operation as projection
+projection stack_op :
+  invariant ξ stack_effect
+  context ζ stack_depth
+  yields ω result
+  cases:
+    (push, shallow) -> "push_ok"
+    (pop, shallow) -> "underflow_risk"
+    (swap, shallow) -> "swap_top_two"
+    (dup, shallow) -> "duplicate_top"
+    (drop, shallow) -> "discard_top"
+    (over, deep) -> "copy_second"
+    (rot, deep) -> "rotate_three"
+    (_, _) -> "noop"
+
+-- Forth's compile-time: IMMEDIATE words execute during compilation
+dimension word_mode : [interpret, compile, immediate]
+
+projection word_execution :
+  invariant ξ word_mode
+  context ζ state
+  yields ω action
+  cases:
+    (interpret, running) -> "execute_now"
+    (compile, running) -> "append_to_definition"
+    (immediate, running) -> "execute_now"
+    (interpret, compiling) -> "compile_error"
+    (compile, compiling) -> "append_to_definition"
+    (immediate, compiling) -> "execute_now"
+    (_, _) -> "abort"
+
+-- Forth arithmetic as meihua
+meihua forth_add(a, b) : a + b
+meihua forth_mul(a, b) : a * b
+meihua forth_div(a, b) : if b == 0 then 0 else a / b
+
+-- CREATE...DOES> (defining words that define words)
+-- This is metaprogramming — can suhc express it?
+ξ create_does : "meta_definition_pattern"

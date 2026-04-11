@@ -1,0 +1,8 @@
+meihua good_fn(a, b) :
+  sqrt(a) + abs(b)
+
+meihua bad_fn(x, y) :
+  undefined_thing(x) + mystery_call(y)
+
+meihua ref_error(p, q) :
+  p + unknown_var + q

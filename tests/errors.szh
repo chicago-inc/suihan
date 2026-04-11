@@ -1,0 +1,16 @@
+-- errors.szh
+-- Deliberately broken file to test error detection.
+-- Each section triggers a specific bloat category.
+
+unit user
+unit community
+
+-- ERROR 1: Reduplication — same ξ at two addresses.
+ξ structural_role : owner | admin | member | pending
+ξ structural_role : owner | admin | member | pending
+
+-- ERROR 5: Scope confusion — numeric value in ξ position.
+ξ migration_count : 42
+
+-- A standalone ω with no traversal derivation.
+ω admin_tabs : [menu, reservations, shifts]

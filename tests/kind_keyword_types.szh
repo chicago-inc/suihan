@@ -1,0 +1,20 @@
+-- Sprint 6B test: kind keywords used as type annotations
+-- All kind keywords (unit, magnitude, vector, dimension, zero) should
+-- be accepted as valid type annotations without unknown_type errors.
+
+unit meter
+magnitude distance
+vector velocity
+dimension directions : north | south | east | west
+
+meihua typed_unit(a : unit) :
+  a + 1
+
+meihua typed_magnitude(a : magnitude, b : magnitude) :
+  a + b
+
+meihua typed_vector(a : vector) :
+  a * 2
+
+meihua typed_dimension(a : dimension) :
+  a + 1

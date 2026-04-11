@@ -1,0 +1,50 @@
+-- Smalltalk: message passing, late binding, metaclasses, blocks
+-- Tests: can suhc express dynamic dispatch and everything-is-an-object?
+
+unit object
+unit message
+unit block
+unit metaclass
+
+-- Everything is an object, everything communicates via messages
+dependency message_send : object -> object
+  carries: selector, arguments
+  structure: dispatch
+
+-- Class hierarchy as containment
+containment class_hierarchy : [object, number, collection, string_class, block_class]
+
+-- Message dispatch as projection
+dimension message_type : [unary, binary, keyword]
+
+projection dispatch_method :
+  invariant ξ message_type
+  context ζ receiver_class
+  yields ω handler
+  cases:
+    (unary, number) -> "self"
+    (binary, number) -> "arithmetic"
+    (keyword, collection) -> "enumeration"
+    (unary, block_class) -> "evaluate"
+    (_, _) -> "doesNotUnderstand"
+
+-- doesNotUnderstand as the universal fallback
+-- This is Smalltalk's equivalent of the oracle ceiling
+meihua does_not_understand(receiver, selector) :
+  "MessageNotUnderstood"
+
+-- Blocks (closures) as first-class
+meihua evaluate_block(block_body, ctx) :
+  match ctx { local -> block_body, _ -> "deferred" }
+
+-- Metaclass: the class of a class
+morphism metaclass_of : object -> metaclass
+  preserves: protocol
+  changes: abstraction_level
+
+-- Image-based persistence — the whole system state is one object
+ξ image_based : "true"
+
+-- Reflection: an object can inspect itself
+meihua responds_to(object_type, selector) :
+  if object_type == "number" then "yes" else "check_hierarchy"

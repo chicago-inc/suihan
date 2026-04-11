@@ -1,0 +1,19 @@
+-- Edge case: deeply nested expressions
+meihua deeply_nested(a, b, c, d, e) :
+  if a > 0 then if b > 0 then if c > 0 then if d > 0 then if e > 0 then a + b + c + d + e else a + b + c + d else a + b + c else a + b else a else 0
+
+-- Deeply nested match
+meihua deep_match(x) :
+  match x { alpha -> match x { beta -> "deep", _ -> "mid" }, _ -> "shallow" }
+
+-- Long arithmetic chain
+meihua long_chain(a, b, c, d, e, f, g, h) :
+  ((a + b) * (c - d)) / ((e + f) * (g - h) + 1)
+
+-- Deeply nested coalesce
+meihua deep_coalesce(a, b, c, d, e) :
+  a ?? b ?? c ?? d ?? e ?? "default"
+
+-- Many parameters
+meihua ten_params(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10) :
+  p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10

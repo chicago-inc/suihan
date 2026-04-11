@@ -1,0 +1,9 @@
+import foundational
+
+-- foundational.szh declares: incommensurable structural_roles, resource_types
+
+-- Untyped params — gradual typing, no enforcement
+meihua lookup_role(entity) : entity
+
+-- Typed params using declared types
+meihua typed_lookup(role : unit, res : unit) : role

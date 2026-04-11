@@ -1,0 +1,37 @@
+-- Edge case: minimal/empty declarations
+
+unit empty_unit
+
+-- Dimension with just one member
+dimension singleton : [only_one]
+
+-- Dimension with two members
+dimension binary_dim : [yes, no]
+
+-- Can we have a projection with one arm?
+projection single_arm :
+  invariant ξ singleton
+  context ζ binary_dim
+  yields ω result
+  cases:
+    (_, _) -> "always_this"
+
+-- Meihua that returns a constant
+meihua constant() : 42
+
+-- Meihua with just a string
+meihua greeting() : "hello"
+
+-- ξ declaration with just a number
+ξ the_answer : 42
+
+-- ξ declaration with just a string
+ξ the_name : "Spoxis"
+
+-- Zero declaration
+zero no_value
+
+-- Multiple zeros
+zero no_x
+zero no_y
+zero no_z

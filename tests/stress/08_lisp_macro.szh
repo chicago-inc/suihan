@@ -1,0 +1,67 @@
+-- Lisp/Scheme/Racket: homoiconicity, macros, continuations, S-expressions
+-- Tests: can suhc express code-as-data and macro expansion?
+
+unit sexpr
+unit cons_cell
+unit symbol
+unit lambda
+
+-- S-expression types
+dimension sexpr_type : [atom, cons, nil_type, number_type, string_type, symbol_type]
+
+-- Evaluation as projection
+projection eval_sexpr :
+  invariant ξ sexpr_type
+  context ζ environment
+  yields ω result
+  cases:
+    (atom, any_env) -> "self_evaluating"
+    (symbol_type, any_env) -> "lookup_binding"
+    (cons, any_env) -> "apply_or_special"
+    (nil_type, any_env) -> "nil"
+    (number_type, any_env) -> "self_evaluating"
+    (string_type, any_env) -> "self_evaluating"
+    (_, _) -> "error"
+
+-- Special forms (not functions — evaluated differently)
+dimension special_form : [quote, if_form, define, lambda_form, let_form, set_bang, begin_form]
+
+projection special_form_handler :
+  invariant ξ special_form
+  context ζ continuation
+  yields ω evaluator
+  cases:
+    (quote, any_k) -> "return_unevaluated"
+    (if_form, any_k) -> "eval_condition_then_branch"
+    (define, any_k) -> "extend_environment"
+    (lambda_form, any_k) -> "create_closure"
+    (let_form, any_k) -> "eval_bindings_then_body"
+    (set_bang, any_k) -> "mutate_binding"
+    (begin_form, any_k) -> "eval_sequence"
+    (_, _) -> "not_special"
+
+-- Macro: code that writes code
+-- Can suhc express this? Macros operate BEFORE evaluation.
+morphism macro_expand : sexpr -> sexpr
+  preserves: semantics
+  changes: syntax
+
+-- Continuations (call/cc)
+-- First-class continuations capture "the rest of the computation"
+morphism capture_continuation : lambda -> lambda
+  preserves: environment
+  changes: control_flow
+
+-- Homoiconicity: programs are data structures
+-- This is the ultimate test — can the language describe itself?
+containment program : [sexpr, sexpr]
+
+-- Church encoding: data from pure functions
+meihua church_true(a, b) : a
+meihua church_false(a, b) : b
+meihua church_and(p, q) : p
+meihua church_zero(f, x) : x
+
+-- Y combinator (fixed-point: recursion without names)
+-- meihua y_comb(f) : f(y_comb(f))  -- would this cause infinite expansion?
+ξ y_combinator : "lambda f . (lambda x . f(x x))(lambda x . f(x x))"

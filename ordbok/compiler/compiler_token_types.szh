@@ -1,0 +1,6 @@
+-- compiler_token_types.szh
+-- Self-describing: the compiler's own TokenType enum as an ordbok dimension.
+-- Emits to include/gen/token_types.h via --target c.
+-- M1 milestone: replaces hand-written TokenType enum in token.h.
+
+dimension tok : ident | number | string | xi | zeta | x | rk | omega | delta_rk | unit | zero | magnitude | vector | dimension | dependency | containment | morphism | projection | traversal | incommensurable | commensurable | perpendicular | invariant | context | data | operator | output | cast | identity | yields | cases | from | through | yield | carries | structure | opens | governed_by | preserves | changes | meihua | zhulin | songqiao | decidable | undecidable | if | then | else | import | colon | pipe | arrow | fat_arrow | comma | dot | lparen | rparen | lbracket | rbracket | lbrace | rbrace | semicolon | question | double_question | star | plus | minus | slash | percent | caret | bang | bang_eq | lt | gt | lt_eq | gt_eq | and_and | or_or | cross | equals | double_equals | pipe_arrow | underscore | indent | dedent | newline | comment | eof | error | count

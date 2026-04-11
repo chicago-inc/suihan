@@ -1,0 +1,12 @@
+-- compiler_math_fns.szh
+-- Self-describing: the set of known math functions recognized
+-- by the expression emitters (meihua/songqiao).
+-- Emits to include/gen/math_fns.h via --target c.
+-- M5 milestone: provides the math_fn_t enum for function lookups.
+--
+-- The dimension generates:
+--   - math_fn_t enum
+--   - math_fn_to_str() (enum → string)
+--   - math_fn_from_name() (string → enum, for callee lookup)
+
+dimension math_fn : sqrt | abs | floor | ceil | round | sin | cos | tan | acos | asin | atan | atan2 | pow | log | log2 | min | max

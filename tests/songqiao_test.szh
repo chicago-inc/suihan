@@ -1,0 +1,5 @@
+songqiao tool_readiness(tool_state) :
+  if tool_state == "ready" then 1 else 0
+
+songqiao cognitive_budget(mechanism) :
+  match mechanism { genevieve -> 0, eleanor -> 1, emily -> 3, _ -> 99 }

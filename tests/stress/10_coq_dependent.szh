@@ -1,0 +1,62 @@
+-- Coq/Agda/Idris: dependent types, proof terms, totality checking
+-- Tests: can suhc express types that depend on values?
+
+unit type
+unit term_coq
+unit proof
+unit proposition
+
+-- Universe hierarchy
+dimension universe : [prop, set_u, type_0, type_1, type_2]
+
+-- Proof tactics
+dimension tactic : [intro, apply, exact, rewrite, induction, destruct, reflexivity, simpl]
+
+-- Dependent types: the type of a vector depends on its length
+-- Can we express Vec n a where n is a value?
+-- This is the core challenge for dependent types
+projection vector_type :
+  invariant ξ length_constraint
+  context ζ element_type
+  yields ω type_signature
+  cases:
+    (zero_length, any_type) -> "Vec 0 a = Nil"
+    (succ_length, any_type) -> "Vec (S n) a = Cons a (Vec n a)"
+    (_, _) -> "Vec n a"
+
+dimension length_constraint : [zero_length, succ_length, unknown_length]
+
+-- Curry-Howard correspondence: proofs are programs, propositions are types
+morphism curry_howard : proposition -> type
+  preserves: structure
+  changes: interpretation
+
+-- Totality: every function must terminate
+dimension totality : [total, partial, corecursive]
+
+projection termination_check :
+  invariant ξ totality
+  context ζ recursion_type
+  yields ω verdict
+  cases:
+    (total, structural) -> "accepted"
+    (total, well_founded) -> "accepted"
+    (total, general) -> "rejected"
+    (partial, structural) -> "warning"
+    (corecursive, guarded) -> "accepted"
+    (corecursive, unguarded) -> "rejected"
+    (_, _) -> "unknown"
+
+dimension recursion_type : [structural, well_founded, general, guarded, unguarded]
+
+-- Inductive types
+containment nat_type : [zero_val, succ_val]
+
+-- Proof irrelevance: two proofs of the same proposition are equal
+ξ proof_irrelevance : "forall (p q : P), p = q"
+
+-- The Calculus of Constructions (Coq's foundation)
+ξ coc_axiom : "Prop : Type_0 : Type_1 : ..."
+
+perpendicular universe, tactic
+incommensurable type, proof

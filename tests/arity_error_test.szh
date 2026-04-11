@@ -1,0 +1,13 @@
+import foundational
+
+-- Define a two-parameter meihua
+meihua add(a, b) : a + b
+
+-- Correct arity
+meihua test_ok() : add(1, 2)
+
+-- Wrong arity: too few args
+meihua test_too_few() : add(1)
+
+-- Wrong arity: too many args
+meihua test_too_many() : add(1, 2, 3)

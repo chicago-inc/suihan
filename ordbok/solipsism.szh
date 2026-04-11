@@ -1,0 +1,19 @@
+import foundational
+
+ξ axiom : "Everything is itself. α is α. α is not β."
+
+ξ bloat_causes : reduplication | niche_pipe | temporal_sediment | failure_to_derive | scope_confusion | obtruding_documentation
+
+ξ readiness_states : ready_to_hand | conspicuous | obtrusive | obstinate
+
+ζ belief_possibility_space : "Shannon entropy of user intent model"
+
+ζ oracle_ceiling : "boundary of system knowledge kernel"
+
+ζ solipsism_measure : "S = 1 - (perceived_structure / actual_structure)"
+
+ζ convergence_ratio : "abs(delta_rk_next) / abs(delta_rk_current)"
+
+ξ lakatos_barrier : "locus where S prevents self-revision"
+
+ξ decidability_boundary : "known_true -> act. unknown -> present_do_not_act"

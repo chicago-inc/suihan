@@ -1,0 +1,11 @@
+meihua safe_name(name, fallback) :
+  name ?? fallback
+
+meihua classify_tier(score) :
+  match score { 90 -> "gold", 70 -> "silver", _ -> "bronze" }
+
+meihua make_label(prefix, suffix) :
+  prefix ?? "default"
+
+meihua build_list(a, b, c) :
+  [a, b, c]

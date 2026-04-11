@@ -1,0 +1,20 @@
+-- Sprint 6B test: cascade error suppression
+-- This file generates many errors of the same category.
+-- The compiler should suppress after DIAG_MAX_ERRORS_PER_CATEGORY (10)
+-- and print a summary instead of all 15.
+
+meihua e1(a : fake_type_1) : a
+meihua e2(a : fake_type_2) : a
+meihua e3(a : fake_type_3) : a
+meihua e4(a : fake_type_4) : a
+meihua e5(a : fake_type_5) : a
+meihua e6(a : fake_type_6) : a
+meihua e7(a : fake_type_7) : a
+meihua e8(a : fake_type_8) : a
+meihua e9(a : fake_type_9) : a
+meihua e10(a : fake_type_10) : a
+meihua e11(a : fake_type_11) : a
+meihua e12(a : fake_type_12) : a
+meihua e13(a : fake_type_13) : a
+meihua e14(a : fake_type_14) : a
+meihua e15(a : fake_type_15) : a

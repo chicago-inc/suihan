@@ -1,0 +1,32 @@
+-- compiler_emit_sql_dispatch.szh
+-- Self-describing: the SQL emitter's DeclType → handler dispatch.
+-- Emits to include/gen/emit_sql_dispatch.h via --target c.
+-- M4 milestone: replaces hand-written switch in emit_sql().
+--
+-- Each arm maps a DeclType member to its handler function name.
+-- Handlers with non-standard signatures get dispatch wrappers.
+
+import compiler_decl_types
+
+projection emit_sql_dispatch :
+  invariant ξ decl
+  yields ω dispatch
+  cases:
+    dimension -> "emit_dimension_sql"
+    dependency -> "emit_dependency_sql_d"
+    projection -> "emit_projection_sql"
+    morphism -> "emit_morphism_sql"
+    traversal -> "emit_traversal_sql"
+    meihua -> "emit_meihua_sql"
+    zhulin -> "emit_meihua_sql"
+    songqiao -> "emit_songqiao_sql"
+    unit -> "emit_unit_sql_comment"
+    magnitude -> "emit_unit_sql_comment"
+    vector -> "emit_unit_sql_comment"
+    import -> "emit_import_sql_comment"
+    zero -> ""
+    containment -> ""
+    incommensurable -> ""
+    commensurable -> ""
+    perpendicular -> ""
+    kinded_value -> ""

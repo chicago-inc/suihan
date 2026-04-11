@@ -1,0 +1,61 @@
+-- JavaScript: prototypes, closures, event loop, dynamic typing, promises
+-- Tests: can suhc express prototype chains and async patterns?
+
+unit js_object
+unit prototype
+unit promise
+unit callback
+
+-- Type coercion (JavaScript's famously loose typing)
+dimension js_type : [undefined_js, null_js, boolean_js, number_js, string_js, object_js, symbol_js, bigint_js]
+
+-- Prototype chain lookup
+projection prototype_lookup :
+  invariant ξ property_location
+  context ζ chain_depth
+  yields ω resolution
+  cases:
+    (own_property, shallow) -> "found_own"
+    (prototype_property, shallow) -> "found_proto"
+    (prototype_property, deep) -> "walk_chain"
+    (not_found, shallow) -> "undefined_js"
+    (not_found, deep) -> "undefined_js"
+    (_, _) -> "undefined_js"
+
+dimension property_location : [own_property, prototype_property, not_found]
+dimension chain_depth : [shallow, deep]
+
+-- Event loop phases
+dimension event_phase : [microtask, macrotask, idle, render_phase]
+
+-- Promise states
+dimension promise_state : [pending_promise, fulfilled, rejected]
+
+projection promise_handler :
+  invariant ξ promise_state
+  context ζ handler_type
+  yields ω behavior
+  cases:
+    (pending_promise, then_handler) -> "queue"
+    (fulfilled, then_handler) -> "execute_callback"
+    (rejected, catch_handler) -> "execute_callback"
+    (rejected, then_handler) -> "skip"
+    (fulfilled, catch_handler) -> "skip"
+    (pending_promise, catch_handler) -> "queue"
+    (_, _) -> "noop"
+
+dimension handler_type : [then_handler, catch_handler, finally_handler]
+
+-- this binding
+dimension this_binding : [global_this, method_this, constructor_this, arrow_this, explicit_this]
+
+-- Closure
+meihua make_counter(initial) : initial
+meihua closure_capture(outer_var, inner_fn) : outer_var
+
+-- Type coercion madness
+meihua coerce_to_number(value) :
+  match value { true_val -> 1, false_val -> 0, _ -> 0 }
+
+-- typeof null === "object" (the famous bug)
+ξ typeof_null_bug : "object"

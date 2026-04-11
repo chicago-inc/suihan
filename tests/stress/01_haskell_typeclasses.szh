@@ -1,0 +1,43 @@
+-- Haskell: type classes, higher-kinded types, monads
+-- Tests: can suhc express parametric polymorphism and type class constraints?
+
+unit functor
+unit monad
+unit applicative
+
+dimension type_class : [eq, ord, show, read, num, functor_class, monad_class]
+
+-- Type class as projection: given a type, what operations are available?
+projection show_instance :
+  invariant ξ type_class
+  context ζ data_type
+  yields ω representation
+  cases:
+    (show, int) -> "show_int"
+    (show, string) -> "show_string"
+    (show, list) -> "show_list"
+    (eq, int) -> "eq_int"
+    (eq, string) -> "eq_string"
+    (_, _) -> "no_instance"
+
+-- Monad bind as dependency
+dependency bind : monad -> monad
+  carries: context
+  structure: composition
+
+-- Higher-kinded: functor over a container
+-- Can we express f a -> (a -> b) -> f b ?
+morphism fmap : functor -> functor
+  preserves: structure
+  changes: content
+
+-- Currying as meihua
+meihua add(x, y) : x + y
+meihua increment(x) : add(x, 1)
+
+-- Maybe monad as match
+meihua safe_head(xs) :
+  match xs { empty -> "nothing", _ -> "just" }
+
+-- Lazy evaluation: can we express thunks?
+ξ evaluation_strategy : lazy | strict | non_strict

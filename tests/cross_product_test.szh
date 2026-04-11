@@ -1,0 +1,14 @@
+dimension roles : owner | admin | member
+dimension actions : edit | delete | cancel
+
+projection permission_matrix :
+  invariant ξ role
+  context ζ action
+  yields ω allowed
+  cases:
+    (owner, edit) -> "true"
+    (owner, delete) -> "true"
+    (admin, edit) -> "true"
+    (admin, delete) -> "false"
+    (member, _) -> "false"
+    (_, _) -> "denied"

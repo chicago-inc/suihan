@@ -1,0 +1,33 @@
+-- Edge case: unusual operator combinations and precedence
+-- Tests: does the Pratt climber handle all edge cases?
+
+-- Nested negation
+meihua double_neg(x) : -(-x)
+
+-- Power/exponent with negation
+meihua neg_power(x) : -(x ^ 2)
+
+-- Chain of comparisons (what happens?)
+meihua compare_chain(a, b, c) :
+  if a < b then if b < c then "ascending" else "not_ascending" else "not_ascending"
+
+-- Division edge cases
+meihua many_divides(a, b, c, d) : a / b / c / d
+
+-- Mixed arithmetic and coalesce
+meihua arith_coalesce(a, b) : (a + b) ?? 0
+
+-- Pipe chain
+meihua pipe_test(x) : x |> abs |> sqrt
+
+-- Cross product operator (×)
+-- Already used in dependency syntax, but can it appear in expressions?
+
+-- Comparison operators
+meihua all_comparisons(a, b) :
+  if a == b then "eq" else if a < b then "lt" else if a > b then "gt" else if a <= b then "le" else if a >= b then "ge" else "ne"
+
+-- String with escape-like content
+ξ escape_test : "hello\nworld"
+ξ tab_test : "col1\tcol2"
+ξ quote_test : "she said \"hello\""

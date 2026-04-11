@@ -1,0 +1,59 @@
+-- Mercury: mode system, determinism, committed-choice, type classes with instances
+-- Tests: can suhc express determinism categories and mode declarations?
+
+unit predicate
+unit mode_decl
+unit determinism
+
+-- Mercury's determinism categories (unique to Mercury)
+dimension det_category : [det, semidet, multi, nondet, failure, erroneous, cc_multi, cc_nondet]
+
+-- Mode: input vs output for each argument
+dimension arg_mode : [input_mode, output_mode, unused_mode, partially_instantiated]
+
+-- Determinism affects compilation strategy
+projection compile_strategy :
+  invariant ξ det_category
+  context ζ optimization_level
+  yields ω code_gen
+  cases:
+    (det, high) -> "direct_call"
+    (semidet, high) -> "branch_on_success"
+    (multi, high) -> "backtrack_loop"
+    (nondet, high) -> "full_backtrack"
+    (failure, high) -> "dead_code"
+    (erroneous, high) -> "error_call"
+    (cc_multi, high) -> "committed_choice"
+    (cc_nondet, high) -> "committed_choice"
+    (det, low) -> "generic_call"
+    (_, _) -> "generic_call"
+
+-- Mode checking: each predicate has declared modes
+projection mode_check :
+  invariant ξ arg_mode
+  context ζ call_site
+  yields ω validity
+  cases:
+    (input_mode, bound) -> "valid"
+    (input_mode, unbound) -> "mode_error"
+    (output_mode, unbound) -> "valid"
+    (output_mode, bound) -> "mode_error"
+    (unused_mode, bound) -> "warning"
+    (unused_mode, unbound) -> "valid"
+    (partially_instantiated, bound) -> "valid"
+    (_, _) -> "unknown_mode"
+
+dimension call_site : [bound, unbound]
+
+-- Mercury's module system is very strict
+ξ module_system : "separate_compilation"
+
+-- Uniqueness typing (linear types)
+dimension uniqueness : [unique, shared, dead]
+
+-- Solver types (constraint logic programming extension)
+meihua constrain(var, lower, upper) :
+  if lower > upper then "infeasible" else "feasible"
+
+incommensurable predicate, mode_decl
+perpendicular det_category, arg_mode

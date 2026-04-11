@@ -1,0 +1,18 @@
+-- Edge case: very large dimension (can the compiler handle 100+ members?)
+dimension unicode_block : [basic_latin, latin_supplement, latin_extended_a, latin_extended_b, ipa_extensions, spacing_modifiers, combining_diacriticals, greek_coptic, cyrillic, cyrillic_supplement, armenian, hebrew, arabic, syriac, thaana, devanagari, bengali, gurmukhi, gujarati, oriya, tamil, telugu, kannada, malayalam, sinhala, thai, lao, tibetan, myanmar, georgian, hangul_jamo, ethiopic, cherokee, unified_canadian, ogham, runic, tagalog, hanunoo, buhid, tagbanwa, khmer, mongolian, limbu, tai_le, new_tai_lue, khmer_symbols, buginese, balinese, sundanese, batak, lepcha, ol_chiki, vedic_extensions, phonetic_extensions, combining_supplement, latin_extended_additional, greek_extended, general_punctuation, superscripts, currency_symbols, combining_marks, letterlike_symbols, number_forms, arrows, math_operators, misc_technical, control_pictures, ocr, enclosed_alphanumerics, box_drawing, block_elements, geometric_shapes, misc_symbols, dingbats, braille, cjk_radicals, kangxi_radicals, cjk_symbols, hiragana, katakana, bopomofo]
+
+-- Large projection over that dimension
+projection block_category :
+  invariant ξ unicode_block
+  context ζ script_family
+  yields ω classification
+  cases:
+    (basic_latin, western) -> "ASCII"
+    (greek_coptic, western) -> "Greek"
+    (cyrillic, slavic) -> "Cyrillic"
+    (arabic, semitic) -> "Arabic"
+    (devanagari, indic) -> "Devanagari"
+    (hiragana, cjk) -> "Japanese"
+    (katakana, cjk) -> "Japanese"
+    (hangul_jamo, cjk) -> "Korean"
+    (_, _) -> "Other"

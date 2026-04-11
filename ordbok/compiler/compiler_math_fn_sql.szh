@@ -1,0 +1,34 @@
+-- compiler_math_fn_sql.szh
+-- Self-describing: math function → PostgreSQL function name mapping.
+-- Emits to include/gen/math_fn_sql.h via --target c.
+-- M5 milestone: replaces strcmp chain in emit_sql.c:meihua_expr_to_sql().
+--
+-- Maps ordbok math function names to their PostgreSQL equivalents.
+-- Notable divergences from ordbok names:
+--   log → ln (PostgreSQL uses ln for natural logarithm)
+--   log2 → log (PostgreSQL log(base, x); special-cased in emitter)
+--   min → least, max → greatest (PostgreSQL variadic aggregates)
+
+import compiler_math_fns
+
+projection math_fn_sql :
+  invariant ξ math_fn
+  yields ω label
+  cases:
+    sqrt -> "sqrt"
+    abs -> "abs"
+    floor -> "floor"
+    ceil -> "ceil"
+    round -> "round"
+    sin -> "sin"
+    cos -> "cos"
+    tan -> "tan"
+    acos -> "acos"
+    asin -> "asin"
+    atan -> "atan"
+    atan2 -> "atan2"
+    pow -> "pow"
+    log -> "ln"
+    log2 -> "log"
+    min -> "least"
+    max -> "greatest"

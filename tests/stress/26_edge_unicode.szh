@@ -1,0 +1,35 @@
+-- Edge case: Unicode in strings and comments
+-- Tests: can the compiler handle UTF-8 content?
+
+-- Chinese comment: 这是一个测试
+-- Japanese comment: これはテストです
+-- Arabic comment: هذا اختبار
+-- Russian comment: Это тест
+-- Emoji comment: 🎯 🚀 ✅
+
+ξ chinese_greeting : "你好世界"
+ξ japanese_greeting : "こんにちは世界"
+ξ arabic_greeting : "مرحبا بالعالم"
+ξ russian_greeting : "Привет мир"
+ξ korean_greeting : "안녕하세요"
+ξ thai_greeting : "สวัสดีชาวโลก"
+ξ hebrew_greeting : "שלום עולם"
+
+-- Mathematical symbols in strings
+ξ math_symbols : "∀x ∈ ℝ: x² ≥ 0"
+ξ set_theory : "A ∩ B ⊆ A ∪ B"
+ξ logic_symbols : "P ∧ Q → P ∨ Q"
+
+-- The actual kind sigils as string content
+ξ xi_string : "ξ"
+ξ zeta_string : "ζ"
+ξ omega_string : "ω"
+
+-- Mixed scripts in one string
+ξ mixed : "Hello 你好 مرحبا Привет"
+
+-- Dimension members must be ASCII identifiers — this should work
+dimension test_dim : [alpha, beta, gamma, delta, epsilon]
+
+meihua greet(lang) :
+  match lang { en -> "Hello", zh -> "你好", ja -> "こんにちは", _ -> "Hi" }

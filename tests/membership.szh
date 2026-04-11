@@ -1,0 +1,75 @@
+-- membership.szh
+-- The canonical test file: the membership domain from the Chicago constitution.
+-- Tests: unit, dimension, perpendicular, dependency, projection, traversal.
+
+unit community
+unit user
+unit event
+
+-- The separation is absolute.
+ξ structural_role : owner | admin | member | pending
+
+-- display_title is ζ — computed, never stored, never in a permission gate.
+ζ display_title : projection(structural_role, resource_type)
+
+-- Variable data flowing through the system.
+x party_size : magnitude
+x message : text
+
+-- Dimensions with zero.
+dimension permission : [owner, admin, member, pending, zero]
+dimension label : [text, zero]
+
+-- The two dimensions are perpendicular.
+-- You cannot check display_title in a permission gate.
+perpendicular permission, label
+
+-- Structural relationships.
+incommensurable community, event
+
+dependency membership : user -> community
+  carries: permission, label
+  structure: authority
+
+dependency attendance : user -> event
+  carries: participation
+  structure: rsvp
+
+-- Morphism: promote a member to admin.
+morphism promote : member -> admin
+  preserves: user_id, community_id
+  changes: structural_role
+
+-- Projection: the fundamental ζ-computation.
+projection role_label :
+  invariant ξ structural_role
+  context ζ resource_type
+  yields ω label
+  cases:
+    (owner, group) -> "Owner"
+    (admin, group) -> "Admin"
+    (owner, league) -> "Commissioner"
+    (admin, league) -> "Captain"
+    (_, _) -> default_for(structural_role)
+
+-- Traversal: the unit of computation.
+traversal resolve_member_view :
+  identity ξ :
+    community.visibility
+  context ζ :
+    viewer.membership
+  data x :
+    member_list
+  operator R.k :
+    filter(member_list, viewer)
+  output ω :
+    rendered_list
+  cast ΔR.k :
+    ghost_mode_interaction
+
+-- Execution layers.
+meihua distance(a, b) :
+  sqrt(a)
+
+songqiao production :
+  rt_tol

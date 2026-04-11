@@ -1,0 +1,6 @@
+-- compiler_expr_types.szh
+-- Self-describing: the compiler's own ExprType enum as an ordbok dimension.
+-- Emits to include/gen/expr_types.h via --target c.
+-- M1 milestone: replaces hand-written ExprType enum in ast.h.
+
+dimension expr : ident | number | string | enum | list | call | projection | arrow | cross | block | case | pipe_chain | binary | coalesce | compound | wildcard | decidable | undecidable | unary | match | if

@@ -1,0 +1,19 @@
+-- compiler_kind_names.szh
+-- Self-describing: the compiler's Kind enum display strings.
+-- Emits to include/gen/kind_names.h via --target c.
+-- M2 milestone: replaces hand-written kind_name() in ast.c.
+
+import compiler_kinds
+
+projection kind_name :
+  invariant ξ kind
+  yields ω label
+  cases:
+    xi -> "ξ"
+    zeta -> "ζ"
+    x -> "x"
+    rk -> "R.k"
+    omega -> "ω"
+    delta_rk -> "ΔR.k"
+    inferred -> "<inferred>"
+    none -> "<none>"

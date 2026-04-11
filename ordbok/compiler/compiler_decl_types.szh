@@ -1,0 +1,6 @@
+-- compiler_decl_types.szh
+-- Self-describing: the compiler's own DeclType enum as an ordbok dimension.
+-- Emits to include/gen/decl_types.h via --target c.
+-- M1 milestone: replaces hand-written DeclType enum in ast.h.
+
+dimension decl : unit | zero | magnitude | vector | dimension | dependency | containment | morphism | projection | traversal | incommensurable | commensurable | perpendicular | kinded_value | meihua | zhulin | songqiao | import
