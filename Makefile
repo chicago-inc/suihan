@@ -44,7 +44,7 @@ GEN_HEADERS = $(GENDIR)/kinds.h $(GENDIR)/decl_types.h $(GENDIR)/expr_types.h $(
               $(GENDIR)/keyword_dispatch.h $(GENDIR)/kind_sigil_dispatch.h \
               $(GENDIR)/emit_asm_dispatch.h
 
-.PHONY: all clean test check debug dump-tokens dump-ast regenerate bootstrap lint security release-linux emit-visual
+.PHONY: all clean test check debug dump-tokens dump-ast regenerate bootstrap lint security release-linux emit-visual literal-check
 
 all: $(TARGET)
 
@@ -55,6 +55,13 @@ emit-visual: $(TARGET)
 	./$(TARGET) ../ordbok/visual.szh --target typescript --ordbok ordbok -o ../../src/primitives/visualTokens.ts
 	./$(TARGET) ../ordbok/primitives.szh --target typescript --ordbok ordbok -o ../../src/primitives/primitiveTokens.ts
 	@echo "emitted src/primitives/visualTokens.ts + primitiveTokens.ts"
+
+# Literal-rejection lint over project src + app trees.
+# Skips theme.ts, src/primitives/, .test.*, node_modules, .expo, build, dist.
+# Exits non-zero on any inline hex / rgba — wired into pre-push and CI.
+literal-check: $(TARGET)
+	@./$(TARGET) --literal-check ../../src
+	@./$(TARGET) --literal-check ../../app
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^

@@ -18,6 +18,7 @@
 #include "kindcheck.h"
 #include "perpcheck.h"
 #include "bloatlint.h"
+#include "literal_lint.h"
 #include "decidability.h"
 #include "resolve.h"
 #include "emitter.h"
@@ -509,6 +510,28 @@ int main(int argc, char **argv) {
             }
             audit_dir = argv[++i];
             continue;
+        }
+        if (strcmp(argv[i], "--literal-check") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "suhc: --literal-check requires a file or directory\n");
+                return 2;
+            }
+            const char *target = argv[++i];
+            struct stat st;
+            int hits;
+            if (stat(target, &st) != 0) {
+                fprintf(stderr, "suhc: --literal-check: cannot stat '%s'\n", target);
+                return 2;
+            }
+            hits = S_ISDIR(st.st_mode)
+                ? literal_lint_tree(target)
+                : literal_lint_file(target);
+            if (hits > 0) {
+                fprintf(stderr, "suhc: %d literal violation%s found\n",
+                        hits, hits == 1 ? "" : "s");
+                return 1;
+            }
+            return 0;
         }
         if (strcmp(argv[i], "--convergence") == 0) {
             if (i + 1 >= argc) {
