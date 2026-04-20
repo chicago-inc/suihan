@@ -13,7 +13,7 @@
 CC      ?= gcc
 CFLAGS  ?= -Wall -Wextra -std=c11 -O2 -D_GNU_SOURCE
 CFLAGS  += -Iinclude
-LDFLAGS ?=
+LDFLAGS ?= -lm
 
 # Automatic header dependency generation
 DEPFLAGS = -MMD -MP

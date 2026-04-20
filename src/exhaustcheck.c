@@ -591,6 +591,20 @@ ExhaustReport exhaustcheck(Program *prog, DiagList *diags) {
                                  prog->filename, diags, &report);
     }
 
+    /* Detect axiom_contrast_aa and report coverage status.
+     * Full WCAG evaluation requires resolving theme.ts color tokens to hex
+     * (deferred — needs colors.json registry). For now, emit a note so the
+     * axiom is visible in CI rather than silently passing. */
+    for (size_t i = 0; i < prog->count; i++) {
+        Decl *d = prog->decls[i];
+        if (d->type != DECL_KINDED_VALUE || d->kind != KIND_XI) continue;
+        if (!d->name.text) continue;
+        if (strncmp(d->name.text, "axiom_contrast", 14) != 0) continue;
+        diag_note(diags, DIAG_SCOPE_CONFUSION, prog->filename, d->name.line, 0,
+                  "axiom '%s' detected — WCAG contrast evaluation requires "
+                  "theme.ts color resolution (deferred to S6.5)", d->name.text);
+    }
+
     dim_registry_free(&dr);
     return report;
 }
