@@ -44,9 +44,17 @@ GEN_HEADERS = $(GENDIR)/kinds.h $(GENDIR)/decl_types.h $(GENDIR)/expr_types.h $(
               $(GENDIR)/keyword_dispatch.h $(GENDIR)/kind_sigil_dispatch.h \
               $(GENDIR)/emit_asm_dispatch.h
 
-.PHONY: all clean test check debug dump-tokens dump-ast regenerate bootstrap lint security release-linux
+.PHONY: all clean test check debug dump-tokens dump-ast regenerate bootstrap lint security release-linux emit-visual
 
 all: $(TARGET)
+
+# Emit visual.szh + primitives.szh → src/primitives/*.ts
+# Re-run after any ordbok edit. Generated files are committed (DO NOT EDIT).
+emit-visual: $(TARGET)
+	@mkdir -p ../../src/primitives
+	./$(TARGET) ../ordbok/visual.szh --target typescript --ordbok ordbok -o ../../src/primitives/visualTokens.ts
+	./$(TARGET) ../ordbok/primitives.szh --target typescript --ordbok ordbok -o ../../src/primitives/primitiveTokens.ts
+	@echo "emitted src/primitives/visualTokens.ts + primitiveTokens.ts"
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^

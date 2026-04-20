@@ -121,8 +121,20 @@ static void emit_xi_const(FILE *out, Decl *d) {
     fprintf(out, "/** ξ %s — identity (immutable) */\n", d->name.text);
 
     if (val->type == EXPR_STRING) {
-        fprintf(out, "export const %s = '%s' as const;\n\n",
-                name, val->as.string.value ? val->as.string.value : "");
+        /* JSON-quote the string to handle embedded quotes/backslashes/newlines */
+        const char *s = val->as.string.value ? val->as.string.value : "";
+        fprintf(out, "export const %s = \"", name);
+        for (const char *p = s; *p; p++) {
+            unsigned char c = (unsigned char)*p;
+            if (c == '"')       fprintf(out, "\\\"");
+            else if (c == '\\') fprintf(out, "\\\\");
+            else if (c == '\n') fprintf(out, "\\n");
+            else if (c == '\r') fprintf(out, "\\r");
+            else if (c == '\t') fprintf(out, "\\t");
+            else if (c < 0x20)  fprintf(out, "\\u%04x", c);
+            else                fputc(c, out);
+        }
+        fprintf(out, "\" as const;\n\n");
     } else if (val->type == EXPR_NUMBER) {
         fprintf(out, "export const %s = %s as const;\n\n",
                 name, val->as.number.text ? val->as.number.text : "0");
@@ -178,6 +190,22 @@ static void emit_dimension(FILE *out, Decl *d) {
             }
         }
         fprintf(out, ";\n");
+    } else if (members && members->type == EXPR_ENUM && members->as.enumeration.count > 0) {
+        /* `dimension X : a | b | c` → parser emits EXPR_ENUM */
+        fprintf(out, "type %sValue = ", pascal);
+        bool first = true;
+        for (size_t i = 0; i < members->as.enumeration.count; i++) {
+            const char *m = members->as.enumeration.items[i].name.text;
+            if (!m) continue;
+            if (!first) fprintf(out, " | ");
+            if (strcmp(m, "zero") == 0) fprintf(out, "null");
+            else fprintf(out, "'%s'", m);
+            first = false;
+        }
+        fprintf(out, ";\n");
+    } else if (members && members->type == EXPR_IDENT && members->as.ident.name) {
+        /* Single-member dimension, e.g. `dimension display_field : pixels` */
+        fprintf(out, "type %sValue = '%s';\n", pascal, members->as.ident.name);
     } else {
         fprintf(out, "type %sValue = string | null;\n", pascal);
     }
@@ -302,10 +330,48 @@ static void emit_unit(FILE *out, Decl *d) {
     if (!d->name.text) return;
     char *pascal = to_pascal(d->name.text);
 
-    fprintf(out, "/** unit %s */\n", d->name.text);
-    fprintf(out, "export interface %s {\n", pascal);
-    fprintf(out, "  readonly id: number;\n");
-    fprintf(out, "}\n\n");
+    /*
+     * Component scaffold detection (Phase 7: constitutional renderer foundation).
+     * Units whose names end in _screen are component xi-types.
+     * They emit a React scaffold interface + hook declaration order.
+     * Units whose names start with use_ are implementation unit hooks.
+     * They emit typed hook interfaces.
+     */
+    size_t nlen = strlen(d->name.text);
+    int is_screen = (nlen > 7 && strcmp(d->name.text + nlen - 7, "_screen") == 0);
+    int is_hook   = (nlen > 4 && strncmp(d->name.text, "use_", 4) == 0);
+
+    if (is_screen) {
+        /* Component scaffold: interface + hook declaration order comment */
+        fprintf(out, "/**\n");
+        fprintf(out, " * Component scaffold: %s\n", d->name.text);
+        fprintf(out, " * Constitutional renderer: hooks are keyed by xi-type field name.\n");
+        fprintf(out, " * Call order is declaration order (structurally enforced).\n");
+        fprintf(out, " */\n");
+        fprintf(out, "export interface %sProps {\n", pascal);
+        fprintf(out, "  readonly id: number;\n");
+        fprintf(out, "}\n");
+        fprintf(out, "// Hook declaration order for %s:\n", d->name.text);
+        fprintf(out, "// 1. useAdminVisibility (tier, canSee)\n");
+        fprintf(out, "// 2. usePermissionGate (role, canAccess)\n");
+        fprintf(out, "// 3. Data hooks (keyed by xi-type)\n");
+        fprintf(out, "// 4. Derived state (computed from hooks, never captured)\n\n");
+    } else if (is_hook) {
+        /* Implementation unit hook: typed interface */
+        fprintf(out, "/**\n");
+        fprintf(out, " * Implementation unit hook: %s\n", d->name.text);
+        fprintf(out, " * Constitutional primitive (Build Discipline #25).\n");
+        fprintf(out, " */\n");
+        fprintf(out, "export interface %sReturn {\n", pascal);
+        fprintf(out, "  readonly loading: boolean;\n");
+        fprintf(out, "}\n\n");
+    } else {
+        /* Standard unit */
+        fprintf(out, "/** unit %s */\n", d->name.text);
+        fprintf(out, "export interface %s {\n", pascal);
+        fprintf(out, "  readonly id: number;\n");
+        fprintf(out, "}\n\n");
+    }
 
     free(pascal);
 }
@@ -782,20 +848,33 @@ static void emit_projection(FILE *out, Decl *d, Program *prog) {
     Decl *inv_dim = invariant_name ? find_dimension_for_field(invariant_name, prog) : NULL;
     Decl *ctx_dim = context_name ? find_dimension_for_field(context_name, prog) : NULL;
 
+    /* Type resolution: prefer the dimension's existing branded type (emitted
+     * once by emit_dimension at file top) over re-declaring inline. Fall back
+     * to dimension_to_union for dimensions that aren't in scope. */
     char *inv_union = inv_dim ? dimension_to_union(inv_dim) : NULL;
     char *ctx_union = ctx_dim ? dimension_to_union(ctx_dim) : NULL;
 
-    /* Emit type aliases for matched dimensions */
     char *inv_type = strdup("string");
     char *ctx_type = strdup("string");
-    if (inv_union) {
+    if (inv_dim && inv_dim->name.text) {
+        /* Branded type already exported at file top — reuse it */
+        free(inv_type);
+        inv_type = to_pascal(inv_dim->name.text);
+        free(inv_union);
+        inv_union = NULL;
+    } else if (inv_union) {
         char *type_name = invariant_name ? to_pascal(invariant_name) : strdup("Invariant");
         fprintf(out, "export type %s = %s;\n", type_name, inv_union);
         free(inv_type);
         inv_type = type_name;
         free(inv_union);
     }
-    if (ctx_union) {
+    if (ctx_dim && ctx_dim->name.text) {
+        free(ctx_type);
+        ctx_type = to_pascal(ctx_dim->name.text);
+        free(ctx_union);
+        ctx_union = NULL;
+    } else if (ctx_union) {
         char *type_name = context_name ? to_pascal(context_name) : strdup("Context");
         fprintf(out, "export type %s = %s;\n", type_name, ctx_union);
         free(ctx_type);
@@ -1677,10 +1756,24 @@ static void emit_kind_manifest(FILE *out, Program *prog) {
     fprintf(out, "export const __kindManifest = {\n");
 
     bool first = true;
+    /* De-duplicate by name — relation decls (perpendicular/commensurable) use
+     * d->name.text = first dimension name, which collides with the dimension's
+     * own entry. */
+    char *seen[512] = {0};
+    int n_seen = 0;
     for (size_t i = 0; i < prog->count; i++) {
         Decl *d = prog->decls[i];
         if (d->type == DECL_IMPORT) continue;
+        if (d->type == DECL_PERPENDICULAR ||
+            d->type == DECL_COMMENSURABLE ||
+            d->type == DECL_INCOMMENSURABLE) continue;
         if (!d->name.text) continue;
+        bool dup = false;
+        for (int s = 0; s < n_seen; s++) {
+            if (strcmp(seen[s], d->name.text) == 0) { dup = true; break; }
+        }
+        if (dup) continue;
+        if (n_seen < 512) seen[n_seen++] = (char *)d->name.text;
         if (!first) fprintf(out, ",\n");
         fprintf(out, "  '%s': '%s'", d->name.text, kind_id(d->kind));
         first = false;
