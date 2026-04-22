@@ -56,8 +56,8 @@ Every AST node carries exactly one kind from the unified equation:
 
 | Kind | Symbol | Meaning | Mutability | Emission |
 |------|--------|---------|------------|----------|
-| Identity | ξ | What does not change with context | Immutable | `const` + type union |
-| Shape | ζ | How identity appears in position | Computed, never stored | Pure function |
+| Identity | ξ | Retained identity-shape for the traversal | Immutable | `const` + type union |
+| Shape | ζ | Conditional transform-shape in context | Computed, never stored | Pure function |
 | Variable | x | Runtime data | Mutable | Interface field |
 | Operator | R.k | Traversal paths | Pipeline logic | Function body |
 | Output | ω | What the user sees | Terminal | Return type |
@@ -76,7 +76,7 @@ Every diagnostic the compiler produces is an instance of one
 of six causes. There are no other error categories.
 
 1. **Reduplication** — same ξ at two addresses
-2. **Niche pipe** — ζ in ξ position (shape treated as identity)
+2. **Niche pipe** — ζ in ξ position (conditional shape treated as retained shape)
 3. **Temporal sediment** — unreachable R.k path (dead code)
 4. **Failure to derive** — ω without R.k derivation
 5. **Scope confusion** — information in wrong kind slot

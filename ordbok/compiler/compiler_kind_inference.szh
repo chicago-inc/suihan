@@ -6,8 +6,8 @@
 -- This is the first behavioral projection: it encodes what the compiler
 -- KNOWS about the relationship between declaration types and the unified
 -- equation's kind system. The mapping derives from the constitution:
---   ξ = identity (immutable structure)
---   ζ = shape (computed appearance)
+--   ξ = retained identity-shape (immutable initial condition for the traversal)
+--   ζ = conditional transform-shape (computed at traversal time)
 --   x = variable (runtime data)
 --   R.k = operator (pipeline traversal)
 
