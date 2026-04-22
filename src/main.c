@@ -21,6 +21,7 @@
 #include "literal_lint.h"
 #include "color_math.h"
 #include "colors_registry.h"
+#include "ordbok_pairs.h"
 #include "decidability.h"
 #include "resolve.h"
 #include "emitter.h"
@@ -550,43 +551,56 @@ int main(int argc, char **argv) {
                 return 2;
             }
 
-            /* D35 canonical (role, surface) pairs from visual.szh text_color
-             * projection. Each entry declares the foreground token, a label
-             * for the surface class, and the concrete background token the
-             * surface resolves to in surface_bundle. */
+            /* D35 canonical (role, surface) pairs — loaded dynamically
+             * from visual.szh's text_color + surface_bundle projections
+             * via ordbok_pairs_load (UW-026 Sprint 2E). The hardcoded
+             * pairs[] array was bloat #1 (reduplication of the ordbok
+             * in C), and it drifted whenever visual.szh was edited.
+             *
+             * Historical regression-test bug cases — two entries that
+             * MUST fail (textHeading on gradient_page primary, and
+             * white on white) — are appended after the dynamic pairs
+             * so the checker continues to demonstrate detection of
+             * real violations. */
+            OrdbokPairs ordbok_pairs;
+            ordbok_pairs_init(&ordbok_pairs);
+            size_t dyn = ordbok_pairs_load(&ordbok_pairs,
+                                           "../ordbok/visual.szh");
+            if (dyn == 0) {
+                fprintf(stderr, "suhc: --contrast-audit: no pairs parsed "
+                        "from ../ordbok/visual.szh (is cwd suihan/core/?)\n");
+                colors_registry_free(&reg);
+                ordbok_pairs_free(&ordbok_pairs);
+                return 2;
+            }
+
+            /* Build a unified pairs list: dynamic + historical-bug tests. */
             struct Pair {
                 const char *role;
                 const char *surface;
                 const char *fg_token;
                 const char *bg_token;
-            } pairs[] = {
-                /* card_default bg = colors.white */
-                {"heading",   "card_default",   "textHeading",      "white"},
-                {"body",      "card_default",   "textBody",         "white"},
-                {"subtitle",  "card_default",   "textSecondary",    "white"},
-                {"caption",   "card_default",   "textMuted",        "white"},
-                {"meta",      "card_default",   "textMuted",        "white"},
-                {"link",      "card_default",   "link",             "white"},
-                {"numeric",   "card_default",   "textHeading",      "white"},
-                /* card_pinned bg = colors.surface (alias -> #FFFFFF) */
-                {"heading",   "card_pinned",    "textHeading",      "surface"},
-                /* modal_sheet bg = colors.white */
-                {"heading",   "modal_sheet",    "textHeading",      "white"},
-                /* tinted_panel bg = colors.overlaySubtle (if present) */
-                {"heading",   "tinted_panel",   "textHeading",      "surfaceFaint"},
-                /* gradient_page bg = colors.background (violet-200 #DDD6FE) */
-                {"heading",   "gradient_page",  "gradientHeading",  "background"},
-                {"body",      "gradient_page",  "gradientText",     "background"},
-                {"subtitle",  "gradient_page",  "gradientSubtle",   "background"},
-                {"caption",   "gradient_page",  "gradientMuted",    "background"},
-                {"link",      "gradient_page",  "gradientLink",     "background"},
-                /* gradient_header bg = colors.primary (#7C3AED) — the violet */
-                {"heading",   "gradient_header","gradientHeading",  "primary"},
-                /* Historical bug cases — should FAIL */
+            } hist[] = {
                 {"heading",   "gradient_page",  "textHeading",      "primary"},  /* Admin Tools bug */
                 {"body",      "card_default",   "white",            "white"},    /* invisible admin */
             };
-            size_t npairs = sizeof(pairs) / sizeof(pairs[0]);
+            size_t nhist = sizeof(hist) / sizeof(hist[0]);
+            size_t npairs = ordbok_pairs.count + nhist;
+            struct Pair *pairs = malloc(npairs * sizeof(*pairs));
+            if (!pairs) {
+                colors_registry_free(&reg);
+                ordbok_pairs_free(&ordbok_pairs);
+                return 2;
+            }
+            for (size_t k = 0; k < ordbok_pairs.count; k++) {
+                pairs[k].role = ordbok_pairs.items[k].role;
+                pairs[k].surface = ordbok_pairs.items[k].surface;
+                pairs[k].fg_token = ordbok_pairs.items[k].fg_token;
+                pairs[k].bg_token = ordbok_pairs.items[k].bg_token;
+            }
+            for (size_t k = 0; k < nhist; k++) {
+                pairs[ordbok_pairs.count + k] = hist[k];
+            }
 
             /* Surfaces that resolve to a gradient — evaluate against every
              * stop, gate on the worst-case sample. Corresponds to
@@ -710,6 +724,8 @@ int main(int argc, char **argv) {
             }
 
             colors_registry_free(&reg);
+            ordbok_pairs_free(&ordbok_pairs);
+            free(pairs);
             if (strict_mode && fail_count > 0) return 1;
             return 0;
         }
