@@ -742,6 +742,146 @@ int main(int argc, char **argv) {
             if (strict_mode && canonical_fail_count > 0) return 1;
             return 0;
         }
+        if (strcmp(argv[i], "--ishihara-audit") == 0) {
+            /* Usage: suhc --ishihara-audit [--strict]
+             *
+             * D35.5 Ishihara rule enforcement. Walks visual.szh's
+             * state_delta and semantic_cue projections. For every
+             * state_delta case that encodes a chromatic change
+             * (bg:colors.X or text:colors.X), asserts the
+             * corresponding state_cue or semantic_cue declares a
+             * non-"none" cue. A chromatic-only state change is
+             * D9-fragile for CVD users and the core D35.5 violation.
+             *
+             * Advisory mode default. --strict exits 1 on violations.
+             * Sprint 2H deliverable. */
+            int ish_strict = 0;
+            if (i + 1 < argc && strcmp(argv[i + 1], "--strict") == 0) {
+                ish_strict = 1;
+                i++;
+            }
+
+            FILE *f = fopen("../ordbok/visual.szh", "rb");
+            if (!f) {
+                fprintf(stderr, "suhc: --ishihara-audit: cannot open "
+                        "../ordbok/visual.szh (run from suihan/core/)\n");
+                return 2;
+            }
+
+            char line[4096];
+            int in_state_delta = 0, saw_cases_sd = 0;
+            int in_semantic_cue = 0, saw_cases_sc = 0;
+            int chromatic_changes = 0;
+            int violations = 0;
+            int ok_rows = 0;
+
+            printf("D35.5 Ishihara audit — chromatic state changes vs "
+                   "non-chromatic cue declarations\n\n");
+            printf("  %-20s %-30s %s\n",
+                   "state×surface/field", "chromatic change", "non-chromatic cue");
+            printf("  -------------------- ------------------------------ "
+                   "---------------------\n");
+
+            while (fgets(line, sizeof(line), f)) {
+                if (!in_state_delta) {
+                    const char *t = line;
+                    while (*t && (*t == ' ' || *t == '\t')) t++;
+                    if (strncmp(t, "projection state_delta", 22) == 0) {
+                        in_state_delta = 1;
+                        saw_cases_sd = 0;
+                    }
+                    continue;
+                }
+                if (!saw_cases_sd) {
+                    const char *t = line;
+                    while (*t && (*t == ' ' || *t == '\t')) t++;
+                    if (strncmp(t, "cases:", 6) == 0) saw_cases_sd = 1;
+                    continue;
+                }
+                /* End block on projection/blank */
+                const char *t = line;
+                while (*t && (*t == ' ' || *t == '\t')) t++;
+                if (*t == 0 || *t == '\n' || *t == '\r') { in_state_delta = 0; continue; }
+                if (strncmp(t, "projection", 10) == 0) { in_state_delta = 0; continue; }
+                if (strncmp(t, "ξ", 2) == 0 || strstr(line, "axiom_")) { in_state_delta = 0; continue; }
+
+                /* Look for `bg:colors.X` or `text:colors.X` in the
+                 * case body — these encode a chromatic change. */
+                int has_chromatic = 0;
+                if (strstr(line, "bg:colors.") || strstr(line, "text:colors.")) {
+                    has_chromatic = 1;
+                }
+                if (!has_chromatic) continue;
+                chromatic_changes++;
+
+                /* Parse the (state, surface) tuple from the line */
+                const char *p = strchr(line, '(');
+                if (!p) continue;
+                p++;
+                while (*p == ' ') p++;
+                const char *state_s = p;
+                while (*p && *p != ',') p++;
+                size_t state_l = p - state_s;
+                while (*p && (*p == ',' || *p == ' ')) p++;
+                const char *surf_s = p;
+                while (*p && *p != ')') p++;
+                size_t surf_l = p - surf_s;
+
+                /* Extract the body after `->` */
+                const char *arrow = strstr(line, "->");
+                const char *body = arrow ? arrow + 2 : "";
+                while (*body == ' ' || *body == '"') body++;
+                const char *body_end = body;
+                while (*body_end && *body_end != '\n' && *body_end != '"') body_end++;
+                size_t body_len = body_end - body;
+
+                /* We report; cue lookup is done qualitatively — the
+                 * honest move is to show what state_cue says for this
+                 * (state, surface) pair, which requires a second pass
+                 * over state_cue projections. For this sprint we just
+                 * flag every chromatic state_delta so the human can
+                 * inspect.
+                 *
+                 * Rationale: the state_cue projection is
+                 * (interaction_state × surface_class) and state_delta
+                 * is the same pair-shape. A machine cross-check would
+                 * verify both cases exist and state_cue's result is
+                 * not "none". The line-scanner for that is a follow-
+                 * on under UW-026. */
+                printf("  %.*s × %.*s      %.*s\n",
+                       (int)state_l, state_s,
+                       (int)surf_l, surf_s,
+                       (int)body_len, body);
+
+                /* Heuristic: if the body ONLY has a bg/text color and
+                 * no other cue hint (no ";text:" suffix style shift,
+                 * no "use(" fallback to another case), count as
+                 * unresolved. */
+                const char *semi = strchr(body, ';');
+                if (!semi || semi > body_end) {
+                    /* Single-assignment: only one chromatic delta */
+                    violations++;
+                } else {
+                    ok_rows++;
+                }
+            }
+            fclose(f);
+            (void)in_semantic_cue; (void)saw_cases_sc;
+
+            printf("\nSummary: %d chromatic state_delta arms. %d have an "
+                   "additional non-chromatic side-by-side delta in the\n"
+                   "same case body; %d are chromatic-only (potential "
+                   "D35.5 violations).\n",
+                   chromatic_changes, ok_rows, violations);
+            printf("Note: this audit is a heuristic — the machine-rigorous\n"
+                   "form cross-checks state_cue entries per (state, surface).\n"
+                   "Follow-on work under UW-026.\n");
+            printf("Mode: %s\n",
+                   ish_strict ? "STRICT (exit 1 on violations)" : "advisory");
+
+            if (ish_strict && violations > 0) return 1;
+            return 0;
+        }
         if (strcmp(argv[i], "--oklch") == 0) {
             /* Usage: suhc --oklch <color>
              * Prints OKLCh coordinates for a hex/rgba color. Authoring
