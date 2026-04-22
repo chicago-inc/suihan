@@ -620,7 +620,9 @@ int main(int argc, char **argv) {
             size_t ngrad = sizeof(gradient_stops) / sizeof(gradient_stops[0]);
 
             int fail_count = 0;
+            int canonical_fail_count = 0;  /* excludes historical-regression pairs */
             int parse_fail_count = 0;
+            size_t canonical_count = ordbok_pairs.count;  /* first N pairs are canonical */
             printf("D35 contrast audit over %zu canonical (role, surface) pairs\n", npairs);
             printf("Registry: %zu entries from %s\n", loaded, theme_path);
             printf("Gradient surfaces evaluated at %zu stops (worst-case gates)\n\n", ngrad);
@@ -672,7 +674,10 @@ int main(int argc, char **argv) {
                            pairs[p].fg_token, pairs[p].bg_token,
                            r.dL, r.dC, r.dH_deg,
                            r.passes ? "PASS" : "FAIL");
-                    if (!r.passes) fail_count++;
+                    if (!r.passes) {
+                        fail_count++;
+                        if (p < canonical_count) canonical_fail_count++;
+                    }
                 } else {
                     /* Gradient surface — sample every stop, pair FAILS
                      * if any stop fails (worst-case gate). */
@@ -704,7 +709,10 @@ int main(int argc, char **argv) {
                                r.passes ? "pass" : "FAIL");
                         if (!r.passes) any_fail = 1;
                     }
-                    if (any_fail) fail_count++;
+                    if (any_fail) {
+                        fail_count++;
+                        if (p < canonical_count) canonical_fail_count++;
+                    }
                     printf("  %-10s %-16s %-22s %-22s %-7s %-7s %-7s %s\n",
                            pairs[p].role, pairs[p].surface,
                            pairs[p].fg_token, "== worst-case gate ==",
@@ -715,8 +723,10 @@ int main(int argc, char **argv) {
             printf("\nSummary: %d/%zu PASS, %d FAIL, %d unresolved/parse-fail\n",
                    (int)(npairs - fail_count - parse_fail_count), npairs,
                    fail_count, parse_fail_count);
+            printf("Canonical-only (%zu ordbok-driven pairs): %d FAIL\n",
+                   canonical_count, canonical_fail_count);
             printf("Mode: %s. ",
-                   strict_mode ? "STRICT (exit 1 on failures)" : "advisory (exit 0)");
+                   strict_mode ? "STRICT (exit 1 on canonical failures)" : "advisory (exit 0)");
             if (strict_mode) {
                 printf("\n");
             } else {
@@ -726,7 +736,10 @@ int main(int argc, char **argv) {
             colors_registry_free(&reg);
             ordbok_pairs_free(&ordbok_pairs);
             free(pairs);
-            if (strict_mode && fail_count > 0) return 1;
+            /* Strict mode gates on CANONICAL pairs only. The historical
+             * regression-test pairs MUST fail to prove the checker works;
+             * gating on them would turn the demonstrations into blockers. */
+            if (strict_mode && canonical_fail_count > 0) return 1;
             return 0;
         }
         if (strcmp(argv[i], "--oklch") == 0) {
