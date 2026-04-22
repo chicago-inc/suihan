@@ -19,6 +19,7 @@
 #include "perpcheck.h"
 #include "bloatlint.h"
 #include "literal_lint.h"
+#include "color_math.h"
 #include "decidability.h"
 #include "resolve.h"
 #include "emitter.h"
@@ -510,6 +511,34 @@ int main(int argc, char **argv) {
             }
             audit_dir = argv[++i];
             continue;
+        }
+        if (strcmp(argv[i], "--color-probe") == 0) {
+            /* Usage: suhc --color-probe <fg> <bg>
+             * Emits WCAG ratio + D35 two-channel deltas + verdict.
+             * Pure color-math debug surface — no ordbok or file I/O. */
+            if (i + 2 >= argc) {
+                fprintf(stderr, "suhc: --color-probe requires <fg> <bg>\n");
+                return 2;
+            }
+            const char *fg = argv[++i];
+            const char *bg = argv[++i];
+            double wcag = color_contrast_ratio(fg, bg);
+            TwoChannelResult r = color_eval_two_channel(fg, bg);
+            if (!r.fg_parse_ok || !r.bg_parse_ok) {
+                fprintf(stderr, "suhc: --color-probe: parse failure "
+                        "(fg_ok=%d bg_ok=%d)\n", r.fg_parse_ok, r.bg_parse_ok);
+                return 2;
+            }
+            printf("fg=%s bg=%s\n", fg, bg);
+            printf("  WCAG ratio          %.3f  (AA threshold 4.5)\n", wcag);
+            printf("  OKLCh dL            %.3f  (strong >= %.2f, moderate >= %.2f)\n",
+                   r.dL, D35_STRONG_LUMINANCE_DELTA, D35_MODERATE_LUMINANCE_DELTA);
+            printf("  OKLCh dC            %.3f  (min %.2f)\n",
+                   r.dC, D35_MIN_CHROMA_DELTA);
+            printf("  OKLCh dH (degrees)  %.1f  (min %.1f)\n",
+                   r.dH_deg, D35_MIN_HUE_DELTA_DEG);
+            printf("  D35 two-channel     %s\n", r.passes ? "PASS" : "FAIL");
+            return r.passes ? 0 : 1;
         }
         if (strcmp(argv[i], "--literal-check") == 0) {
             if (i + 1 >= argc) {
