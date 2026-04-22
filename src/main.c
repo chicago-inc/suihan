@@ -564,8 +564,8 @@ int main(int argc, char **argv) {
                 {"heading",   "card_default",   "textHeading",      "white"},
                 {"body",      "card_default",   "textBody",         "white"},
                 {"subtitle",  "card_default",   "textSecondary",    "white"},
-                {"caption",   "card_default",   "textTertiary",     "white"},
-                {"meta",      "card_default",   "textTertiary",     "white"},
+                {"caption",   "card_default",   "textMuted",        "white"},
+                {"meta",      "card_default",   "textMuted",        "white"},
                 {"link",      "card_default",   "link",             "white"},
                 {"numeric",   "card_default",   "textHeading",      "white"},
                 /* card_pinned bg = colors.surface (alias -> #FFFFFF) */
@@ -573,7 +573,7 @@ int main(int argc, char **argv) {
                 /* modal_sheet bg = colors.white */
                 {"heading",   "modal_sheet",    "textHeading",      "white"},
                 /* tinted_panel bg = colors.overlaySubtle (if present) */
-                {"heading",   "tinted_panel",   "textHeading",      "overlaySubtle"},
+                {"heading",   "tinted_panel",   "textHeading",      "surfaceFaint"},
                 /* gradient_page bg = colors.background (violet-200 #DDD6FE) */
                 {"heading",   "gradient_page",  "gradientHeading",  "background"},
                 {"body",      "gradient_page",  "gradientText",     "background"},
