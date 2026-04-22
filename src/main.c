@@ -747,6 +747,170 @@ int main(int argc, char **argv) {
             if (strict_mode && canonical_fail_count > 0) return 1;
             return 0;
         }
+        if (strcmp(argv[i], "--surface-mismatch-audit") == 0) {
+            /* Usage: suhc --surface-mismatch-audit <root> [--strict]
+             *
+             * UW-026 Sprint 2M (scoped). Walks .ts/.tsx files under
+             * <root>, looks for both a top-level <SurfaceProvider
+             * surface="X"> declaration AND resolveTextColor/
+             * resolveIconColor call sites with different surface
+             * arguments in the SAME file. Reports mismatches.
+             *
+             * Heuristic: doesn't track nested SurfaceProvider scopes
+             * or trace through imports. Catches the common case where
+             * a file declares one screen-level surface and a call
+             * site within hardcodes a different one. The full AST-
+             * walking form is deferred (substantial work; honest call
+             * was made under UW-026's 2M planning).
+             *
+             * Advisory by default. --strict exits 1 on any mismatch. */
+            if (i + 1 >= argc) {
+                fprintf(stderr, "suhc: --surface-mismatch-audit requires <root>\n");
+                return 2;
+            }
+            const char *root = argv[++i];
+            int sm_strict = 0;
+            if (i + 1 < argc && strcmp(argv[i + 1], "--strict") == 0) {
+                sm_strict = 1;
+                i++;
+            }
+
+            /* Walk the tree using existing literal_lint helpers via
+             * a small inline scan. For each .tsx file, do a single
+             * pass: collect <SurfaceProvider surface="X"> values, and
+             * collect resolveTextColor/resolveIconColor surface args.
+             * Report any case where the file has exactly one
+             * SurfaceProvider declaration and a resolver call uses
+             * a different surface. */
+            int mismatches = 0;
+            int files_examined = 0;
+
+            /* Recursive walker — minimal, doesn't reuse literal_lint's
+             * static helpers (different filter set). */
+            typedef struct WalkFrame {
+                struct WalkFrame *next;
+                char *path;
+            } WalkFrame;
+            WalkFrame *stack = malloc(sizeof(WalkFrame));
+            stack->next = NULL;
+            stack->path = strdup(root);
+
+            printf("D35 surface-mismatch audit (scoped — per-file heuristic)\n\n");
+            printf("  %-60s %-20s %s\n", "file", "provider declares", "call uses");
+            printf("  ------------------------------------------------------------ "
+                   "-------------------- ----------\n");
+
+            while (stack) {
+                WalkFrame *frame = stack;
+                stack = stack->next;
+                struct stat st;
+                if (stat(frame->path, &st) != 0) {
+                    free(frame->path); free(frame);
+                    continue;
+                }
+                if (S_ISDIR(st.st_mode)) {
+                    DIR *d = opendir(frame->path);
+                    if (d) {
+                        struct dirent *e;
+                        while ((e = readdir(d))) {
+                            if (e->d_name[0] == '.') continue;
+                            if (strcmp(e->d_name, "node_modules") == 0) continue;
+                            if (strcmp(e->d_name, ".expo") == 0) continue;
+                            if (strcmp(e->d_name, "primitives") == 0) continue;
+                            char buf[4096];
+                            snprintf(buf, sizeof(buf), "%s/%s", frame->path, e->d_name);
+                            WalkFrame *nf = malloc(sizeof(WalkFrame));
+                            nf->next = stack; nf->path = strdup(buf);
+                            stack = nf;
+                        }
+                        closedir(d);
+                    }
+                    free(frame->path); free(frame);
+                    continue;
+                }
+                /* Regular file — scan if .tsx */
+                size_t plen = strlen(frame->path);
+                if (plen < 5 || strcmp(frame->path + plen - 4, ".tsx") != 0) {
+                    free(frame->path); free(frame);
+                    continue;
+                }
+                files_examined++;
+                FILE *f = fopen(frame->path, "rb");
+                if (!f) { free(frame->path); free(frame); continue; }
+
+                char provider_surface[64] = {0};
+                int provider_count = 0;
+                char line[8192];
+                int line_no = 0;
+                /* First pass — find provider surfaces */
+                while (fgets(line, sizeof(line), f)) {
+                    line_no++;
+                    const char *p = strstr(line, "<SurfaceProvider");
+                    if (!p) continue;
+                    const char *s = strstr(p, "surface=");
+                    if (!s) continue;
+                    s += 8;
+                    if (*s == '\'' || *s == '"') s++;
+                    const char *e = s;
+                    while (*e && *e != '\'' && *e != '"' && *e != ' ' && *e != '>' && *e != '}') e++;
+                    size_t l = e - s;
+                    if (l == 0 || l >= sizeof(provider_surface)) continue;
+                    if (provider_count == 0) {
+                        memcpy(provider_surface, s, l);
+                        provider_surface[l] = 0;
+                    }
+                    provider_count++;
+                }
+                if (provider_count != 1) {
+                    fclose(f); free(frame->path); free(frame);
+                    continue;
+                }
+                /* Second pass — find resolver calls with different surface */
+                rewind(f);
+                line_no = 0;
+                while (fgets(line, sizeof(line), f)) {
+                    line_no++;
+                    const char *p;
+                    for (const char *fname_pat[] = {"resolveTextColor(", "resolveIconColor(", NULL}, **fp = fname_pat; *fp; fp++) {
+                        const char *q = line;
+                        while ((p = strstr(q, *fp))) {
+                            const char *args = p + strlen(*fp);
+                            while (*args == ' ') args++;
+                            if (*args != '\'' && *args != '"') {
+                                q = p + 1; continue;
+                            }
+                            char open = *args; args++;
+                            const char *e = args;
+                            while (*e && *e != open) e++;
+                            size_t l = e - args;
+                            if (l == 0 || l >= 64) {
+                                q = p + 1; continue;
+                            }
+                            char call_surface[64];
+                            memcpy(call_surface, args, l);
+                            call_surface[l] = 0;
+                            if (strcmp(call_surface, provider_surface) != 0) {
+                                printf("  %-60s %-20s %s   (line %d)\n",
+                                       frame->path, provider_surface, call_surface, line_no);
+                                mismatches++;
+                            }
+                            q = e + 1;
+                        }
+                    }
+                }
+                fclose(f); free(frame->path); free(frame);
+            }
+
+            printf("\nSummary: %d files examined, %d mismatches.\n",
+                   files_examined, mismatches);
+            printf("Mode: %s. ",
+                   sm_strict ? "STRICT (exit 1 on mismatches)" : "advisory (exit 0)");
+            printf("\n");
+            printf("Note: heuristic only — full JSX-tree verification is the\n"
+                   "AST-walking form deferred under UW-026.\n");
+            if (sm_strict && mismatches > 0) return 1;
+            return 0;
+        }
         if (strcmp(argv[i], "--ishihara-audit") == 0) {
             /* Usage: suhc --ishihara-audit [--strict]
              *
