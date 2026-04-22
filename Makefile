@@ -63,6 +63,19 @@ literal-check: $(TARGET)
 	@./$(TARGET) --literal-check ../../src
 	@./$(TARGET) --literal-check ../../app
 
+# D35 contrast audit (advisory). Loads theme.ts and runs the two-channel
+# predicate on canonical (role, surface) pairs declared in visual.szh.
+# Exits 0 regardless of failures. Use for reporting.
+contrast-audit: $(TARGET)
+	@./$(TARGET) --contrast-audit ../../src/lib/theme.ts
+
+# D35 contrast audit (strict). Same as above but exits 1 if any pair
+# fails. NOT YET WIRED INTO CI — the 6 known-failing pairs in theme.ts
+# must be remediated (UW-026 Sprint 2B) before this gate can be flipped
+# in pre-push. Run locally to preview the gate state.
+contrast-audit-strict: $(TARGET)
+	@./$(TARGET) --contrast-audit ../../src/lib/theme.ts --strict
+
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
