@@ -514,21 +514,32 @@ int main(int argc, char **argv) {
             continue;
         }
         if (strcmp(argv[i], "--contrast-audit") == 0) {
-            /* Usage: suhc --contrast-audit <theme.ts>
+            /* Usage: suhc --contrast-audit <theme.ts> [--strict]
+             *
              * Loads theme.ts colors into a registry, resolves visual.szh's
              * canonical (role, surface) text-color pairs, runs the D35
              * two-channel predicate on each, and emits a report.
              *
-             * The pair list is derived from visual.szh's text_color
-             * projection cases. Advisory for now — exit 0 regardless of
-             * failures so this can land without breaking CI. Sprint 3
-             * (D35-BUILD-01C) flips the gate to blocking once the
-             * surface-scoped token migration is complete. */
+             * Gradient surfaces (gradient_page, gradient_header) are
+             * evaluated at three stops (start/mid/end per visual.szh's
+             * gradient_fill projection) and the worst-case sample gates
+             * the pair — a pair passes iff every sample passes.
+             *
+             * Default mode is advisory (exit 0 regardless of failures).
+             * --strict flips the exit code to match the worst verdict
+             * (exit 1 if any pair fails). This is the gate that Sprint 3
+             * (D35-BUILD-01C) exposes; it ships unwired to CI until the
+             * failing pairs have been resolved or migrated. */
             if (i + 1 >= argc) {
                 fprintf(stderr, "suhc: --contrast-audit requires <theme.ts>\n");
                 return 2;
             }
             const char *theme_path = argv[++i];
+            int strict_mode = 0;
+            if (i + 1 < argc && strcmp(argv[i + 1], "--strict") == 0) {
+                strict_mode = 1;
+                i++;
+            }
             ColorsRegistry reg;
             colors_registry_init(&reg);
             size_t loaded = colors_registry_load_theme(&reg, theme_path);
@@ -577,47 +588,130 @@ int main(int argc, char **argv) {
             };
             size_t npairs = sizeof(pairs) / sizeof(pairs[0]);
 
+            /* Surfaces that resolve to a gradient — evaluate against every
+             * stop, gate on the worst-case sample. Corresponds to
+             * visual.szh's surface_gradient projection. */
+            struct GradientStop {
+                const char *surface;
+                const char *stop_label;
+                const char *bg_token;
+            } gradient_stops[] = {
+                {"gradient_page",   "start",  "gradientStart"},
+                {"gradient_page",   "mid",    "gradientMid"},
+                {"gradient_page",   "end",    "gradientEnd"},
+                {"gradient_header", "start",  "gradientStart"},
+                {"gradient_header", "mid",    "gradientMid"},
+                {"gradient_header", "end",    "gradientEnd"},
+            };
+            size_t ngrad = sizeof(gradient_stops) / sizeof(gradient_stops[0]);
+
             int fail_count = 0;
             int parse_fail_count = 0;
             printf("D35 contrast audit over %zu canonical (role, surface) pairs\n", npairs);
-            printf("Registry: %zu entries from %s\n\n", loaded, theme_path);
+            printf("Registry: %zu entries from %s\n", loaded, theme_path);
+            printf("Gradient surfaces evaluated at %zu stops (worst-case gates)\n\n", ngrad);
             printf("  %-10s %-16s %-22s %-22s %-7s %-7s %-7s %s\n",
-                   "role", "surface", "fg_token", "bg_token", "dL", "dC", "dH", "D35");
+                   "role", "surface", "fg_token", "bg_token/stop", "dL", "dC", "dH", "D35");
             printf("  ---------- ---------------- ---------------------- "
                    "---------------------- ------- ------- ------- -----\n");
 
             for (size_t p = 0; p < npairs; p++) {
                 const char *fg = colors_registry_resolve(&reg, pairs[p].fg_token);
-                const char *bg = colors_registry_resolve(&reg, pairs[p].bg_token);
-                if (!fg || !bg) {
-                    printf("  %-10s %-16s %-22s %-22s  unresolved\n",
+                if (!fg) {
+                    printf("  %-10s %-16s %-22s %-22s  unresolved fg\n",
                            pairs[p].role, pairs[p].surface,
                            pairs[p].fg_token, pairs[p].bg_token);
                     parse_fail_count++;
                     continue;
                 }
-                TwoChannelResult r = color_eval_two_channel(fg, bg);
-                if (!r.fg_parse_ok || !r.bg_parse_ok) {
-                    printf("  %-10s %-16s %-22s %-22s  parse-fail (fg=%s bg=%s)\n",
-                           pairs[p].role, pairs[p].surface,
-                           pairs[p].fg_token, pairs[p].bg_token, fg, bg);
-                    parse_fail_count++;
-                    continue;
+
+                /* Determine whether this surface is a gradient and build
+                 * the list of bg stops to evaluate. */
+                int is_gradient = 0;
+                for (size_t s = 0; s < ngrad; s++) {
+                    if (strcmp(pairs[p].surface, gradient_stops[s].surface) == 0) {
+                        is_gradient = 1;
+                        break;
+                    }
                 }
-                printf("  %-10s %-16s %-22s %-22s %-7.3f %-7.3f %-7.1f %s\n",
-                       pairs[p].role, pairs[p].surface,
-                       pairs[p].fg_token, pairs[p].bg_token,
-                       r.dL, r.dC, r.dH_deg,
-                       r.passes ? "PASS" : "FAIL");
-                if (!r.passes) fail_count++;
+
+                if (!is_gradient) {
+                    /* Scalar surface — single check */
+                    const char *bg = colors_registry_resolve(&reg, pairs[p].bg_token);
+                    if (!bg) {
+                        printf("  %-10s %-16s %-22s %-22s  unresolved bg\n",
+                               pairs[p].role, pairs[p].surface,
+                               pairs[p].fg_token, pairs[p].bg_token);
+                        parse_fail_count++;
+                        continue;
+                    }
+                    TwoChannelResult r = color_eval_two_channel(fg, bg);
+                    if (!r.fg_parse_ok || !r.bg_parse_ok) {
+                        printf("  %-10s %-16s %-22s %-22s  parse-fail\n",
+                               pairs[p].role, pairs[p].surface,
+                               pairs[p].fg_token, pairs[p].bg_token);
+                        parse_fail_count++;
+                        continue;
+                    }
+                    printf("  %-10s %-16s %-22s %-22s %-7.3f %-7.3f %-7.1f %s\n",
+                           pairs[p].role, pairs[p].surface,
+                           pairs[p].fg_token, pairs[p].bg_token,
+                           r.dL, r.dC, r.dH_deg,
+                           r.passes ? "PASS" : "FAIL");
+                    if (!r.passes) fail_count++;
+                } else {
+                    /* Gradient surface — sample every stop, pair FAILS
+                     * if any stop fails (worst-case gate). */
+                    int any_fail = 0;
+                    for (size_t s = 0; s < ngrad; s++) {
+                        if (strcmp(gradient_stops[s].surface, pairs[p].surface) != 0) continue;
+                        const char *bg = colors_registry_resolve(&reg, gradient_stops[s].bg_token);
+                        if (!bg) {
+                            printf("  %-10s %-16s %-22s %-22s  unresolved stop\n",
+                                   pairs[p].role, pairs[p].surface,
+                                   pairs[p].fg_token, gradient_stops[s].bg_token);
+                            parse_fail_count++;
+                            any_fail = 1;
+                            continue;
+                        }
+                        TwoChannelResult r = color_eval_two_channel(fg, bg);
+                        if (!r.fg_parse_ok || !r.bg_parse_ok) {
+                            parse_fail_count++;
+                            any_fail = 1;
+                            continue;
+                        }
+                        char bg_label[64];
+                        snprintf(bg_label, sizeof(bg_label), "%s[%s]",
+                                 gradient_stops[s].bg_token, gradient_stops[s].stop_label);
+                        printf("  %-10s %-16s %-22s %-22s %-7.3f %-7.3f %-7.1f %s\n",
+                               pairs[p].role, pairs[p].surface,
+                               pairs[p].fg_token, bg_label,
+                               r.dL, r.dC, r.dH_deg,
+                               r.passes ? "pass" : "FAIL");
+                        if (!r.passes) any_fail = 1;
+                    }
+                    if (any_fail) fail_count++;
+                    printf("  %-10s %-16s %-22s %-22s %-7s %-7s %-7s %s\n",
+                           pairs[p].role, pairs[p].surface,
+                           pairs[p].fg_token, "== worst-case gate ==",
+                           "", "", "",
+                           any_fail ? "FAIL" : "PASS");
+                }
             }
             printf("\nSummary: %d/%zu PASS, %d FAIL, %d unresolved/parse-fail\n",
                    (int)(npairs - fail_count - parse_fail_count), npairs,
                    fail_count, parse_fail_count);
-            printf("Mode: advisory (D35-BUILD-01B). Exit 0 regardless of failures.\n");
+            printf("Mode: %s. ",
+                   strict_mode ? "STRICT (exit 1 on failures)" : "advisory (exit 0)");
+            if (strict_mode) {
+                printf("\n");
+            } else {
+                printf("Re-run with --strict to gate.\n");
+            }
 
             colors_registry_free(&reg);
-            return 0;  /* advisory — blocking mode gates on Sprint 3 */
+            if (strict_mode && fail_count > 0) return 1;
+            return 0;
         }
         if (strcmp(argv[i], "--color-probe") == 0) {
             /* Usage: suhc --color-probe <fg> <bg>
