@@ -861,7 +861,34 @@ int main(int argc, char **argv) {
                     }
                     provider_count++;
                 }
-                if (provider_count != 1) {
+                /* Cross-file inheritance (Sprint 2M-extend): if no
+                 * <SurfaceProvider> was found in this file but the file
+                 * imports Screen, treat Screen's default surface
+                 * (gradient_page) as the implicit provider. This catches
+                 * files that render through Screen and call
+                 * resolveTextColor('card_default', ...) without
+                 * establishing a card wrapper themselves. */
+                if (provider_count == 0) {
+                    rewind(f);
+                    int imports_screen = 0;
+                    while (fgets(line, sizeof(line), f)) {
+                        if (strstr(line, "from '../components/Screen'") ||
+                            strstr(line, "from '../../src/components/Screen'") ||
+                            strstr(line, "from '../../../src/components/Screen'") ||
+                            strstr(line, "from '../../../../src/components/Screen'") ||
+                            strstr(line, "from '../../components/Screen'")) {
+                            imports_screen = 1;
+                            break;
+                        }
+                    }
+                    if (imports_screen) {
+                        strcpy(provider_surface, "gradient_page");
+                        provider_count = 1;
+                    } else {
+                        fclose(f); free(frame->path); free(frame);
+                        continue;
+                    }
+                } else if (provider_count != 1) {
                     fclose(f); free(frame->path); free(frame);
                     continue;
                 }
