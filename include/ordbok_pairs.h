@@ -48,4 +48,11 @@ void ordbok_pairs_free(OrdbokPairs *p);
  * the number of pairs loaded. */
 size_t ordbok_pairs_load(OrdbokPairs *p, const char *visual_szh_path);
 
+/* Same as ordbok_pairs_load but parses any named projection. Used by
+ * --contrast-audit to enumerate icon_color pairs alongside text_color.
+ * Sprint 2K. */
+size_t ordbok_pairs_load_projection(OrdbokPairs *p,
+                                     const char *visual_szh_path,
+                                     const char *projection_name);
+
 #endif

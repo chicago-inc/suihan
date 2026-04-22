@@ -160,6 +160,124 @@ static void append_text_color_pair(OrdbokPairs *p, const char *role,
     e->bg_token = strdup(bg_token);
 }
 
+/* Generalized loader: parses a named projection's cases. Two-pass
+ * structure same as ordbok_pairs_load (surface_bundle bg map first,
+ * then projection cases). The bg map is loaded fresh on each call —
+ * inefficient but only invoked twice per audit run. */
+size_t ordbok_pairs_load_projection(OrdbokPairs *pairs,
+                                     const char *visual_szh_path,
+                                     const char *projection_name) {
+    if (!pairs || !visual_szh_path || !projection_name) return 0;
+
+    OrdbokPairs bg_map;
+    ordbok_pairs_init(&bg_map);
+
+    FILE *f = fopen(visual_szh_path, "rb");
+    if (!f) return 0;
+
+    char line[4096];
+    int in_surface_bundle = 0;
+    int saw_cases_sb = 0;
+
+    while (fgets(line, sizeof(line), f)) {
+        if (!in_surface_bundle) {
+            if (line_is_projection_header(line, "surface_bundle")) {
+                in_surface_bundle = 1;
+                saw_cases_sb = 0;
+            }
+            continue;
+        }
+        if (!saw_cases_sb) {
+            if (line_is_cases(line)) saw_cases_sb = 1;
+            continue;
+        }
+        const char *t = line;
+        while (*t && isspace((unsigned char)*t)) t++;
+        if (*t == 0) { in_surface_bundle = 0; continue; }
+        if (strncmp(t, "projection", 10) == 0) { in_surface_bundle = 0; continue; }
+        if (strstr(line, "axiom_")) { in_surface_bundle = 0; continue; }
+
+        const char *a, *b, *v;
+        size_t al, bl, vl;
+        if (!parse_case_arm(line, &a, &al, &b, &bl, &v, &vl)) continue;
+        if (bl != 2 || strncmp(b, "bg", 2) != 0) continue;
+        if (al == 1 && a[0] == '_') continue;
+
+        char *token = extract_colors_token(v, vl);
+        if (!token) continue;
+        char *surface = xstrndup(a, al);
+
+        if (bg_map.count == bg_map.cap) {
+            size_t ncap = bg_map.cap ? bg_map.cap * 2 : 16;
+            OrdbokPair *ne = realloc(bg_map.items, ncap * sizeof(OrdbokPair));
+            if (ne) { bg_map.items = ne; bg_map.cap = ncap; }
+        }
+        OrdbokPair *entry = &bg_map.items[bg_map.count++];
+        entry->role = surface;
+        entry->surface = strdup("");
+        entry->fg_token = strdup("");
+        entry->bg_token = token;
+    }
+    fclose(f);
+
+    f = fopen(visual_szh_path, "rb");
+    if (!f) {
+        ordbok_pairs_free(&bg_map);
+        return 0;
+    }
+
+    int in_proj = 0;
+    int saw_cases_proj = 0;
+    size_t added = 0;
+
+    while (fgets(line, sizeof(line), f)) {
+        if (!in_proj) {
+            if (line_is_projection_header(line, projection_name)) {
+                in_proj = 1;
+                saw_cases_proj = 0;
+            }
+            continue;
+        }
+        if (!saw_cases_proj) {
+            if (line_is_cases(line)) saw_cases_proj = 1;
+            continue;
+        }
+        const char *t = line;
+        while (*t && isspace((unsigned char)*t)) t++;
+        if (*t == 0) { in_proj = 0; continue; }
+        if (strncmp(t, "projection", 10) == 0) { in_proj = 0; continue; }
+
+        const char *a, *b, *v;
+        size_t al, bl, vl;
+        if (!parse_case_arm(line, &a, &al, &b, &bl, &v, &vl)) continue;
+
+        if (al == 1 && a[0] == '_') continue;
+        if (bl == 1 && b[0] == '_') continue;
+
+        char *fg_token = extract_colors_token(v, vl);
+        if (!fg_token) continue;
+
+        char role_buf[128];
+        char surf_buf[128];
+        if (al >= sizeof(role_buf) || bl >= sizeof(surf_buf)) {
+            free(fg_token); continue;
+        }
+        memcpy(role_buf, a, al); role_buf[al] = 0;
+        memcpy(surf_buf, b, bl); surf_buf[bl] = 0;
+
+        const char *bg_token = lookup_bg(&bg_map, surf_buf);
+        if (!bg_token) { free(fg_token); continue; }
+
+        append_text_color_pair(pairs, role_buf, surf_buf, fg_token, bg_token);
+        free(fg_token);
+        added++;
+    }
+    fclose(f);
+
+    ordbok_pairs_free(&bg_map);
+    return added;
+}
+
 /* Two-pass parse: first pass builds surface_bundle bg map, second
  * pass builds text_color pairs resolving bg from the map. */
 size_t ordbok_pairs_load(OrdbokPairs *pairs, const char *visual_szh_path) {

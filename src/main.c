@@ -564,8 +564,13 @@ int main(int argc, char **argv) {
              * real violations. */
             OrdbokPairs ordbok_pairs;
             ordbok_pairs_init(&ordbok_pairs);
-            size_t dyn = ordbok_pairs_load(&ordbok_pairs,
-                                           "../ordbok/visual.szh");
+            /* Load text_color pairs */
+            size_t dyn_text = ordbok_pairs_load_projection(&ordbok_pairs,
+                                "../ordbok/visual.szh", "text_color");
+            /* Load icon_color pairs (Sprint 2K) */
+            size_t dyn_icon = ordbok_pairs_load_projection(&ordbok_pairs,
+                                "../ordbok/visual.szh", "icon_color");
+            size_t dyn = dyn_text + dyn_icon;
             if (dyn == 0) {
                 fprintf(stderr, "suhc: --contrast-audit: no pairs parsed "
                         "from ../ordbok/visual.szh (is cwd suihan/core/?)\n");
