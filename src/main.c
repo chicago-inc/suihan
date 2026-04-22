@@ -20,6 +20,7 @@
 #include "bloatlint.h"
 #include "literal_lint.h"
 #include "color_math.h"
+#include "colors_registry.h"
 #include "decidability.h"
 #include "resolve.h"
 #include "emitter.h"
@@ -511,6 +512,112 @@ int main(int argc, char **argv) {
             }
             audit_dir = argv[++i];
             continue;
+        }
+        if (strcmp(argv[i], "--contrast-audit") == 0) {
+            /* Usage: suhc --contrast-audit <theme.ts>
+             * Loads theme.ts colors into a registry, resolves visual.szh's
+             * canonical (role, surface) text-color pairs, runs the D35
+             * two-channel predicate on each, and emits a report.
+             *
+             * The pair list is derived from visual.szh's text_color
+             * projection cases. Advisory for now — exit 0 regardless of
+             * failures so this can land without breaking CI. Sprint 3
+             * (D35-BUILD-01C) flips the gate to blocking once the
+             * surface-scoped token migration is complete. */
+            if (i + 1 >= argc) {
+                fprintf(stderr, "suhc: --contrast-audit requires <theme.ts>\n");
+                return 2;
+            }
+            const char *theme_path = argv[++i];
+            ColorsRegistry reg;
+            colors_registry_init(&reg);
+            size_t loaded = colors_registry_load_theme(&reg, theme_path);
+            if (loaded == 0) {
+                fprintf(stderr, "suhc: --contrast-audit: no colors parsed from '%s'\n",
+                        theme_path);
+                colors_registry_free(&reg);
+                return 2;
+            }
+
+            /* D35 canonical (role, surface) pairs from visual.szh text_color
+             * projection. Each entry declares the foreground token, a label
+             * for the surface class, and the concrete background token the
+             * surface resolves to in surface_bundle. */
+            struct Pair {
+                const char *role;
+                const char *surface;
+                const char *fg_token;
+                const char *bg_token;
+            } pairs[] = {
+                /* card_default bg = colors.white */
+                {"heading",   "card_default",   "textHeading",      "white"},
+                {"body",      "card_default",   "textBody",         "white"},
+                {"subtitle",  "card_default",   "textSecondary",    "white"},
+                {"caption",   "card_default",   "textTertiary",     "white"},
+                {"meta",      "card_default",   "textTertiary",     "white"},
+                {"link",      "card_default",   "link",             "white"},
+                {"numeric",   "card_default",   "textHeading",      "white"},
+                /* card_pinned bg = colors.surface (alias -> #FFFFFF) */
+                {"heading",   "card_pinned",    "textHeading",      "surface"},
+                /* modal_sheet bg = colors.white */
+                {"heading",   "modal_sheet",    "textHeading",      "white"},
+                /* tinted_panel bg = colors.overlaySubtle (if present) */
+                {"heading",   "tinted_panel",   "textHeading",      "overlaySubtle"},
+                /* gradient_page bg = colors.background (violet-200 #DDD6FE) */
+                {"heading",   "gradient_page",  "gradientHeading",  "background"},
+                {"body",      "gradient_page",  "gradientText",     "background"},
+                {"subtitle",  "gradient_page",  "gradientSubtle",   "background"},
+                {"caption",   "gradient_page",  "gradientMuted",    "background"},
+                {"link",      "gradient_page",  "gradientLink",     "background"},
+                /* gradient_header bg = colors.primary (#7C3AED) — the violet */
+                {"heading",   "gradient_header","gradientHeading",  "primary"},
+                /* Historical bug cases — should FAIL */
+                {"heading",   "gradient_page",  "textHeading",      "primary"},  /* Admin Tools bug */
+                {"body",      "card_default",   "white",            "white"},    /* invisible admin */
+            };
+            size_t npairs = sizeof(pairs) / sizeof(pairs[0]);
+
+            int fail_count = 0;
+            int parse_fail_count = 0;
+            printf("D35 contrast audit over %zu canonical (role, surface) pairs\n", npairs);
+            printf("Registry: %zu entries from %s\n\n", loaded, theme_path);
+            printf("  %-10s %-16s %-22s %-22s %-7s %-7s %-7s %s\n",
+                   "role", "surface", "fg_token", "bg_token", "dL", "dC", "dH", "D35");
+            printf("  ---------- ---------------- ---------------------- "
+                   "---------------------- ------- ------- ------- -----\n");
+
+            for (size_t p = 0; p < npairs; p++) {
+                const char *fg = colors_registry_resolve(&reg, pairs[p].fg_token);
+                const char *bg = colors_registry_resolve(&reg, pairs[p].bg_token);
+                if (!fg || !bg) {
+                    printf("  %-10s %-16s %-22s %-22s  unresolved\n",
+                           pairs[p].role, pairs[p].surface,
+                           pairs[p].fg_token, pairs[p].bg_token);
+                    parse_fail_count++;
+                    continue;
+                }
+                TwoChannelResult r = color_eval_two_channel(fg, bg);
+                if (!r.fg_parse_ok || !r.bg_parse_ok) {
+                    printf("  %-10s %-16s %-22s %-22s  parse-fail (fg=%s bg=%s)\n",
+                           pairs[p].role, pairs[p].surface,
+                           pairs[p].fg_token, pairs[p].bg_token, fg, bg);
+                    parse_fail_count++;
+                    continue;
+                }
+                printf("  %-10s %-16s %-22s %-22s %-7.3f %-7.3f %-7.1f %s\n",
+                       pairs[p].role, pairs[p].surface,
+                       pairs[p].fg_token, pairs[p].bg_token,
+                       r.dL, r.dC, r.dH_deg,
+                       r.passes ? "PASS" : "FAIL");
+                if (!r.passes) fail_count++;
+            }
+            printf("\nSummary: %d/%zu PASS, %d FAIL, %d unresolved/parse-fail\n",
+                   (int)(npairs - fail_count - parse_fail_count), npairs,
+                   fail_count, parse_fail_count);
+            printf("Mode: advisory (D35-BUILD-01B). Exit 0 regardless of failures.\n");
+
+            colors_registry_free(&reg);
+            return 0;  /* advisory — blocking mode gates on Sprint 3 */
         }
         if (strcmp(argv[i], "--color-probe") == 0) {
             /* Usage: suhc --color-probe <fg> <bg>
