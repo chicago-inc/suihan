@@ -713,6 +713,36 @@ int main(int argc, char **argv) {
             if (strict_mode && fail_count > 0) return 1;
             return 0;
         }
+        if (strcmp(argv[i], "--oklch") == 0) {
+            /* Usage: suhc --oklch <color>
+             * Prints OKLCh coordinates for a hex/rgba color. Authoring
+             * aid: when hand-tuning a color to meet a D35 threshold,
+             * OKLCh coordinates are predictable (ΔL in OKLCh is the
+             * perceptual-luminance delta the two-channel rule gates on).
+             * sRGB hex values are not predictable for tuning.
+             *
+             * Output format:
+             *   #RRGGBB  ->  OKLCh(L C h°)
+             *
+             * This is UW-026 Sprint 2C's lightweight deliverable. Full
+             * migration of theme.ts values to OKLCh notation is
+             * deferred — the checker already works correctly on sRGB
+             * hex via the internal sRGB→OKLab pipeline. */
+            if (i + 1 >= argc) {
+                fprintf(stderr, "suhc: --oklch requires a color string\n");
+                return 2;
+            }
+            const char *c = argv[++i];
+            bool ok = false;
+            OkLCh lch = color_parse_to_oklch(c, &ok);
+            if (!ok) {
+                fprintf(stderr, "suhc: --oklch: cannot parse '%s'\n", c);
+                return 2;
+            }
+            printf("%s -> OKLCh(L=%.3f C=%.3f h=%.1f°)\n",
+                   c, lch.L, lch.C, lch.h);
+            return 0;
+        }
         if (strcmp(argv[i], "--color-probe") == 0) {
             /* Usage: suhc --color-probe <fg> <bg>
              * Emits WCAG ratio + D35 two-channel deltas + verdict.
