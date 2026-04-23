@@ -1,0 +1,31 @@
+-- permissions.szh — Admin visibility and section tier projections
+-- Constitutional basis: D3 (ABAC), intelligence model (level x compartment x scope)
+
+dimension admin_sections : members | scheduling | menus | messaging | attendance | finance | compliance | settings
+dimension authority_tiers : owner | admin | member | none
+
+perpendicular admin_sections, authority_tiers
+
+projection admin_visibility :
+  invariant ξ structural_role
+  context ζ admin_section
+  yields ω visible
+  cases:
+    (owner, _) -> "true"
+    (admin, members) -> "true"
+    (admin, scheduling) -> "true"
+    (admin, menus) -> "true"
+    (admin, messaging) -> "true"
+    (admin, attendance) -> "true"
+    (admin, finance) -> "false"
+    (admin, compliance) -> "false"
+    (admin, settings) -> "false"
+    (member, _) -> "false"
+    (pending, _) -> "false"
+    (_, _) -> "false"
+
+-- Section tier classification
+-- Perpendicular to content gates (isGraph, industry, orgCapabilities)
+-- Content gates: WHAT renders. Permission gates: WHO sees it.
+ξ admin_tier_sections : members | scheduling | menus | messaging | attendance
+ξ owner_tier_sections : finance | compliance | settings

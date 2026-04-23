@@ -1,5 +1,8 @@
 # 歲寒 Suihan — Project Journal
 
+> **Note (2026-04-13):** References to "CLAUDE.md" in this document refer to what is now `SPOXIS_CONSTITUTION.md`. The file was renamed; the content is unchanged.
+
+
 **Compiler:** suhc v1.0.0 (M7 — Full Bootstrap)
 **Language:** C11, zero dependencies beyond libc
 **Last sprint:** M7 — Full Bootstrap (fixed point verified)

@@ -26,6 +26,24 @@ not what a label says it is. A membership is a membership
 because of its structural_role, not because someone stored
 "Commissioner" in a display_title column.
 
+**Perception corollary (inherited from parent constitutions'
+Perception Axiom — SPOXIS_CONSTITUTION.md D35, RAE CLAUDE.md D50,
+CHICAGO_THEORY.md §Perception).** The axiom presupposes
+distinguishability, and distinguishability at any rendering or
+input boundary presupposes a perceiver with a channel structure.
+Color conflation, homograph conflation, and any foreground-surface
+collapse are axiomatic violations at the boundary where the
+compiler's output reaches a user. suhc is the parent-constitutions'
+machine-enforcement layer for this corollary at the rendering
+boundary: the `axiom_contrast_aa` predicate in
+`suihan/ordbok/visual.szh` and the `suhc --literal-check` target
+are the current instantiations. Extending the predicate from WCAG
+luminance ratio to the two-channel rule (ΔL ≥ 0.4 on a perceptually
+uniform lightness axis, or ΔL ≥ 0.3 ∧ ΔChroma ≥ 0.1 ∧ ΔHue ≥ 30°,
+or a declared non-chromatic cue) is scheduled as Spoxis `UW-026 /
+D35-BUILD-01` and will require corresponding suhc changes in
+`src/color_math.c` and `src/literal_lint.c`.
+
 ---
 
 ## The Kind System

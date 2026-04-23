@@ -1,0 +1,21 @@
+-- rendering.szh — Component xi-type declarations
+-- Constitutional basis: D12 (shape-identity separation applied to render trees)
+
+-- Component screen units
+-- A screen declares what structural units it operates on.
+-- Hook order is declaration order (structurally enforced, not positional).
+unit admin_screen
+unit venue_edit_screen
+
+-- Implementation unit hooks (shared contracts — Build Discipline #25)
+-- Named in the ordbok as implementation units.
+-- suhc will emit them as constitutional primitives once emit_react matures.
+unit use_admin_visibility
+unit use_permission_gate
+unit use_mutation
+unit use_realtime_query
+unit use_platform_action
+
+-- Rendering dependency: screen operates on structural inputs
+dependency component_rendering : admin_screen -> use_admin_visibility
+dependency venue_rendering : venue_edit_screen -> use_permission_gate

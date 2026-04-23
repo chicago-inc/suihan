@@ -1,0 +1,36 @@
+-- venue.szh — Venue authority and edit visibility projections
+-- Constitutional basis: D3 instance-level access, three-source authority
+
+dimension venue_relationships : direct_owner | community_admin | venue_claim | community_member | none
+dimension venue_claim_states : unclaimed | pending | claimed | disputed
+dimension venue_edit_sections : details | photos | menus | spaces | shifts | pricing | transfer | delete
+
+projection venue_authority :
+  invariant ξ relationship_type
+  context ζ venue_context
+  yields ω authority_level
+  cases:
+    (direct_owner, _) -> "owner"
+    (community_admin, claimed) -> "admin"
+    (venue_claim, claimed) -> "admin"
+    (community_member, _) -> "member"
+    (none, _) -> "none"
+    (_, _) -> "none"
+
+projection venue_edit_visibility :
+  invariant ξ authority_level
+  context ζ edit_section
+  yields ω visible
+  cases:
+    (owner, _) -> "true"
+    (admin, details) -> "true"
+    (admin, photos) -> "true"
+    (admin, menus) -> "true"
+    (admin, spaces) -> "true"
+    (admin, shifts) -> "true"
+    (admin, pricing) -> "false"
+    (admin, transfer) -> "false"
+    (admin, delete) -> "false"
+    (member, _) -> "false"
+    (none, _) -> "false"
+    (_, _) -> "false"
