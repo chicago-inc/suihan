@@ -121,6 +121,158 @@ static EnumDef *er_find(EnumRegistry *er, const char *name) {
 /* dependency → CREATE TABLE                                     */
 /* ------------------------------------------------------------ */
 
+/* Find a top-level field on a dependency by label, return value or NULL. */
+static Expr *dep_field_value(Decl *d, const char *label) {
+    if (!label) return NULL;
+    for (size_t i = 0; i < d->as.dependency.field_count; i++) {
+        DeclField *f = &d->as.dependency.fields[i];
+        if (f->label.text && strcmp(f->label.text, label) == 0) {
+            return f->value;
+        }
+    }
+    return NULL;
+}
+
+/* Get a key out of an EXPR_COMPOUND, return the value or NULL. */
+static Expr *compound_get(Expr *e, const char *key) {
+    if (!e || e->type != EXPR_COMPOUND || !key) return NULL;
+    for (size_t i = 0; i < e->as.compound.count; i++) {
+        if (e->as.compound.keys[i].text &&
+            strcmp(e->as.compound.keys[i].text, key) == 0) {
+            return e->as.compound.values[i];
+        }
+    }
+    return NULL;
+}
+
+/* Stringify an Expr for SQL — IDENT/STRING/NUMBER/CALL(no-arg) only.
+ * Returns a malloc'd string; caller frees. NULL on unsupported shape. */
+static char *expr_simple_str(Expr *e) {
+    if (!e) return NULL;
+    switch (e->type) {
+    case EXPR_IDENT:
+        return e->as.ident.name ? strdup(e->as.ident.name) : NULL;
+    case EXPR_STRING:
+        return e->as.string.value ? strdup(e->as.string.value) : NULL;
+    case EXPR_NUMBER:
+        return e->as.number.text ? strdup(e->as.number.text) : NULL;
+    case EXPR_CALL: {
+        if (!e->as.call.callee) return NULL;
+        /* No-arg call like now() or gen_random_uuid() — emit as `name()` */
+        if (e->as.call.arg_count == 0) {
+            char *buf = malloc(strlen(e->as.call.callee) + 4);
+            sprintf(buf, "%s()", e->as.call.callee);
+            return buf;
+        }
+        /* Single string arg: literal_typeof("uuid") → cast wrapper. Skip. */
+        return NULL;
+    }
+    default:
+        return NULL;
+    }
+}
+
+/* Map ordbok type names to SQL types.
+ * `text_array` → `text[]`, `uuid` → `uuid`, etc. */
+static const char *map_type_name(const char *t) {
+    if (!t) return "text";
+    if (strcmp(t, "text_array") == 0) return "text[]";
+    if (strcmp(t, "uuid_array") == 0) return "uuid[]";
+    if (strcmp(t, "bigint_array") == 0) return "bigint[]";
+    if (strcmp(t, "int_array") == 0) return "integer[]";
+    /* Pass-through known types */
+    return t;
+}
+
+/* Emit one column line from a compound `{ name, type, nullable, default,
+ * references: { table, column, on_delete } }`. */
+static void emit_column_compound(FILE *out, Expr *col, bool first) {
+    if (!col || col->type != EXPR_COMPOUND) return;
+    char *name = expr_simple_str(compound_get(col, "name"));
+    char *type = expr_simple_str(compound_get(col, "type"));
+    if (!name || !type) { free(name); free(type); return; }
+
+    /* Special-case: `default: identity` on bigint emits the standard
+     * IDENTITY PRIMARY KEY decoration instead of a literal default. */
+    char *defv = expr_simple_str(compound_get(col, "default"));
+    if (defv && strcmp(defv, "identity") == 0 && strcmp(type, "bigint") == 0) {
+        fprintf(out, "%s\n  %s bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY",
+                first ? "" : ",", name);
+        free(defv); free(name); free(type);
+        return;
+    }
+
+    fprintf(out, "%s\n  %s %s", first ? "" : ",", name, map_type_name(type));
+
+    Expr *nullable = compound_get(col, "nullable");
+    bool is_nullable = false;
+    if (nullable && nullable->type == EXPR_IDENT && nullable->as.ident.name &&
+        strcmp(nullable->as.ident.name, "true") == 0) {
+        is_nullable = true;
+    }
+    if (!is_nullable) fprintf(out, " NOT NULL");
+
+    if (defv) {
+        /* Recognized SQL function-style defaults emit as bare calls.
+         * Numeric literals emit as bare numbers. Anything else is a
+         * string literal and gets quoted. */
+        bool is_fn_default =
+            strcmp(defv, "now") == 0 ||
+            strcmp(defv, "current_timestamp") == 0 ||
+            strcmp(defv, "current_date") == 0 ||
+            strcmp(defv, "gen_random_uuid") == 0 ||
+            strchr(defv, '(') != NULL;
+        bool is_numeric = strspn(defv, "0123456789.-") == strlen(defv) && strlen(defv) > 0;
+        if (is_fn_default) {
+            /* If user wrote `now` (bare ident), append () */
+            if (strchr(defv, '(') == NULL) {
+                fprintf(out, " DEFAULT %s()", defv);
+            } else {
+                fprintf(out, " DEFAULT %s", defv);
+            }
+        } else if (is_numeric) {
+            fprintf(out, " DEFAULT %s", defv);
+        } else {
+            fprintf(out, " DEFAULT '%s'", defv);
+        }
+        free(defv);
+    }
+
+    Expr *refs = compound_get(col, "references");
+    if (refs && refs->type == EXPR_COMPOUND) {
+        char *tbl = expr_simple_str(compound_get(refs, "table"));
+        char *rcol = expr_simple_str(compound_get(refs, "column"));
+        char *ondel = expr_simple_str(compound_get(refs, "on_delete"));
+        if (tbl) {
+            /* Allow `auth_users` shorthand → `auth.users` */
+            const char *tbl_out = tbl;
+            char tbl_buf[128];
+            if (strcmp(tbl, "auth_users") == 0) {
+                snprintf(tbl_buf, sizeof(tbl_buf), "auth.users");
+                tbl_out = tbl_buf;
+            }
+            fprintf(out, " REFERENCES %s(%s)", tbl_out, rcol ? rcol : "id");
+            if (ondel) {
+                /* uppercase the cascade keyword */
+                char up[32]; size_t n = strlen(ondel);
+                for (size_t i = 0; i < n && i < 31; i++) up[i] = (char)toupper((unsigned char)ondel[i]);
+                up[n < 31 ? n : 31] = 0;
+                fprintf(out, " ON DELETE %s", up);
+            }
+        }
+        free(tbl); free(rcol); free(ondel);
+    }
+
+    /* CHECK constraint inline: { check: "..." } emits CHECK (...) */
+    char *check = expr_simple_str(compound_get(col, "check"));
+    if (check) {
+        fprintf(out, " CHECK (%s)", check);
+        free(check);
+    }
+
+    free(name); free(type);
+}
+
 static void emit_dependency_sql(FILE *out, Decl *d, EnumRegistry *er) {
     if (!d->name.text) return;
 
@@ -141,6 +293,156 @@ static void emit_dependency_sql(FILE *out, Decl *d, EnumRegistry *er) {
             d->name.text,
             from_name ? from_name : "?",
             to_name ? to_name : "?");
+
+    /* schema: { columns: [...], unique: [...], checks: [...],
+     *           indexes: [...], policies: [...] }
+     * When present, opts into full explicit schema declaration. The
+     * existing FROM/TO arrow + carries auto-generation is suppressed.
+     * Used to bring an .szh declaration to 100% production parity per
+     * D46 (Substrate Generator Authority). */
+    Expr *schema = dep_field_value(d, "schema");
+
+    if (schema && schema->type == EXPR_COMPOUND) {
+        fprintf(out, "CREATE TABLE IF NOT EXISTS %s (", table_name);
+        Expr *cols = compound_get(schema, "columns");
+        bool first_col = true;
+        if (cols && cols->type == EXPR_LIST) {
+            for (size_t i = 0; i < cols->as.list.count; i++) {
+                Expr *c = cols->as.list.items[i];
+                if (c) {
+                    emit_column_compound(out, c, first_col);
+                    first_col = false;
+                }
+            }
+        }
+        /* checks: list of compounds { name, expr } emit as table-level CHECK */
+        Expr *checks = compound_get(schema, "checks");
+        if (checks && checks->type == EXPR_LIST) {
+            for (size_t i = 0; i < checks->as.list.count; i++) {
+                Expr *chk = checks->as.list.items[i];
+                if (!chk || chk->type != EXPR_COMPOUND) continue;
+                char *expr_str = expr_simple_str(compound_get(chk, "expr"));
+                if (expr_str) {
+                    fprintf(out, ",\n  CHECK (%s)", expr_str);
+                    free(expr_str);
+                }
+            }
+        }
+        /* unique: a list of column-name lists, each emits one UNIQUE */
+        Expr *uniq = compound_get(schema, "unique");
+        if (uniq && uniq->type == EXPR_LIST) {
+            /* Detect nested list shape vs flat list */
+            bool nested = uniq->as.list.count > 0 &&
+                          uniq->as.list.items[0] &&
+                          uniq->as.list.items[0]->type == EXPR_LIST;
+            if (nested) {
+                for (size_t i = 0; i < uniq->as.list.count; i++) {
+                    Expr *cols_list = uniq->as.list.items[i];
+                    if (!cols_list || cols_list->type != EXPR_LIST) continue;
+                    fprintf(out, ",\n  UNIQUE (");
+                    for (size_t j = 0; j < cols_list->as.list.count; j++) {
+                        char *cn = expr_simple_str(cols_list->as.list.items[j]);
+                        if (j > 0) fprintf(out, ", ");
+                        fprintf(out, "%s", cn ? cn : "?");
+                        free(cn);
+                    }
+                    fprintf(out, ")");
+                }
+            } else {
+                fprintf(out, ",\n  UNIQUE (");
+                for (size_t j = 0; j < uniq->as.list.count; j++) {
+                    char *cn = expr_simple_str(uniq->as.list.items[j]);
+                    if (j > 0) fprintf(out, ", ");
+                    fprintf(out, "%s", cn ? cn : "?");
+                    free(cn);
+                }
+                fprintf(out, ")");
+            }
+        }
+        fprintf(out, "\n);\n\n");
+
+        /* indexes: list of compounds { on: [cols], name?, unique?,
+         *                              method?, where? } */
+        Expr *idxs = compound_get(schema, "indexes");
+        if (idxs && idxs->type == EXPR_LIST) {
+            for (size_t i = 0; i < idxs->as.list.count; i++) {
+                Expr *ix = idxs->as.list.items[i];
+                if (!ix || ix->type != EXPR_COMPOUND) continue;
+                char *name = expr_simple_str(compound_get(ix, "name"));
+                Expr *on = compound_get(ix, "on");
+                char *method = expr_simple_str(compound_get(ix, "method"));
+                char *whereclause = expr_simple_str(compound_get(ix, "where"));
+                Expr *uniq_flag = compound_get(ix, "unique");
+                bool is_uniq = uniq_flag && uniq_flag->type == EXPR_IDENT &&
+                               uniq_flag->as.ident.name &&
+                               strcmp(uniq_flag->as.ident.name, "true") == 0;
+                fprintf(out, "CREATE %sINDEX IF NOT EXISTS %s ON %s",
+                        is_uniq ? "UNIQUE " : "",
+                        name ? name : "idx_unnamed",
+                        table_name);
+                if (method) fprintf(out, " USING %s", method);
+                fprintf(out, " (");
+                if (on && on->type == EXPR_LIST) {
+                    for (size_t j = 0; j < on->as.list.count; j++) {
+                        char *cn = expr_simple_str(on->as.list.items[j]);
+                        if (j > 0) fprintf(out, ", ");
+                        fprintf(out, "%s", cn ? cn : "?");
+                        free(cn);
+                    }
+                } else if (on) {
+                    char *cn = expr_simple_str(on);
+                    fprintf(out, "%s", cn ? cn : "?");
+                    free(cn);
+                }
+                fprintf(out, ")");
+                if (whereclause) fprintf(out, " WHERE %s", whereclause);
+                fprintf(out, ";\n");
+                free(name); free(method); free(whereclause);
+            }
+            fprintf(out, "\n");
+        }
+
+        /* RLS enable + policies: list of compounds
+         *   { name, command, using?, with_check? } */
+        Expr *pols = compound_get(schema, "policies");
+        if (pols && pols->type == EXPR_LIST && pols->as.list.count > 0) {
+            fprintf(out, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;\n\n",
+                    table_name);
+            for (size_t i = 0; i < pols->as.list.count; i++) {
+                Expr *p = pols->as.list.items[i];
+                if (!p || p->type != EXPR_COMPOUND) continue;
+                char *pname = expr_simple_str(compound_get(p, "name"));
+                char *cmd = expr_simple_str(compound_get(p, "command"));
+                char *usingcl = expr_simple_str(compound_get(p, "using"));
+                char *checkcl = expr_simple_str(compound_get(p, "with_check"));
+                if (!pname || !cmd) {
+                    free(pname); free(cmd); free(usingcl); free(checkcl);
+                    continue;
+                }
+                /* uppercase command for SQL */
+                char cmd_up[16]; size_t cn = strlen(cmd);
+                for (size_t k = 0; k < cn && k < 15; k++) cmd_up[k] = (char)toupper((unsigned char)cmd[k]);
+                cmd_up[cn < 15 ? cn : 15] = 0;
+
+                fprintf(out, "CREATE POLICY %s ON %s\n  FOR %s", pname, table_name, cmd_up);
+                if (usingcl) fprintf(out, "\n  USING (%s)", usingcl);
+                if (checkcl) fprintf(out, "\n  WITH CHECK (%s)", checkcl);
+                fprintf(out, ";\n");
+                free(pname); free(cmd); free(usingcl); free(checkcl);
+            }
+            fprintf(out, "\n");
+        } else {
+            /* No policies declared but schema present — emit RLS-enable
+             * comment so the table isn't silently unprotected */
+            fprintf(out, "-- TODO: policies for %s (none declared in .szh)\n", table_name);
+            fprintf(out, "-- ALTER TABLE %s ENABLE ROW LEVEL SECURITY;\n\n", table_name);
+        }
+
+        free(table_name);
+        return;
+    }
+
+    /* --- Legacy auto-FK behavior (no schema field present) --- */
     fprintf(out, "CREATE TABLE IF NOT EXISTS %s (\n", table_name);
     fprintf(out, "  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY");
 
