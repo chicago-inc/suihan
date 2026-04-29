@@ -1,0 +1,30 @@
+-- substrate.szh
+-- RAE substrate-construction journeys.
+-- Source: docs/PROGRAM_MAP.md §Substrate construction journeys (1-4).
+-- Phase 4 starter set — 3 of the ~28 RAE journeys ported as the
+-- shape-validation pass. Remaining journeys to follow in subsequent
+-- ordbok-authorship commits.
+
+journey aggregate_corpus_and_train_bpe
+  xi: corpus_sources
+  zeta: filesystem_state
+  rk: aggregate_then_train_bpe
+  omega: tokenized_corpus_with_tokenizer
+  terminus: bpe_tokenizer_persisted
+  failure_modes: corpus_source_missing_or_unreadable
+
+journey cluster_bpe_primitives_pmi
+  xi: tokenized_corpus_with_K
+  zeta: cluster_window_size
+  rk: pmi_then_kmeans
+  omega: cluster_ids_with_metadata
+  terminus: cluster_map_persisted
+  failure_modes: kmeans_failed_to_converge
+
+journey extract_cluster_typed_kernels
+  xi: tokenized_corpus_with_cluster_ids
+  zeta: window_and_min_pair_freq
+  rk: count_triples_then_filter_then_assemble
+  omega: kernel_network_pickle_with_metadata
+  terminus: kernel_network_persisted
+  failure_modes: insufficient_pair_frequency_for_filter
