@@ -28,3 +28,13 @@ export function sign(n: number): number {
   return ((n > 0)) ? 1 : ((n < 0)) ? (-1) : 0;
 }
 
+
+/* Kind manifest — 256-bit perpendicular encoding metadata */
+export const __kindManifest = {
+  'safe_divide': 'xi',
+  'clamp_v2': 'xi',
+  'abs_value': 'xi',
+  'sign': 'xi'
+} as const;
+
+export type KindOf<K extends keyof typeof __kindManifest> = typeof __kindManifest[K];

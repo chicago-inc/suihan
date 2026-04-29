@@ -16,3 +16,11 @@ export interface Thing {
 /** ξ axiom — identity (immutable) */
 export const axiom = 'α' as const;
 
+
+/* Kind manifest — 256-bit perpendicular encoding metadata */
+export const __kindManifest = {
+  'thing': 'xi',
+  'axiom': 'xi'
+} as const;
+
+export type KindOf<K extends keyof typeof __kindManifest> = typeof __kindManifest[K];

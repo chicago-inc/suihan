@@ -48,3 +48,40 @@ AS $$
   SELECT ARRAY[p_a, p_b, p_c]
 $$;
 
+
+-- Kind metadata (256-bit perpendicular encoding)
+CREATE TABLE IF NOT EXISTS _szh_kind_metadata (
+  symbol_name  text PRIMARY KEY,
+  kind         text NOT NULL,
+  source_file  text,
+  updated_at   timestamptz DEFAULT now()
+);
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('safe_name', 'xi', './tests/expr_complete.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('classify_tier', 'xi', './tests/expr_complete.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('make_label', 'xi', './tests/expr_complete.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('build_list', 'xi', './tests/expr_complete.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+

@@ -6,3 +6,26 @@
 
 -- unit thing (structural — no SQL output)
 
+
+-- Kind metadata (256-bit perpendicular encoding)
+CREATE TABLE IF NOT EXISTS _szh_kind_metadata (
+  symbol_name  text PRIMARY KEY,
+  kind         text NOT NULL,
+  source_file  text,
+  updated_at   timestamptz DEFAULT now()
+);
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('thing', 'xi', './tests/minimal.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('axiom', 'xi', './tests/minimal.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+

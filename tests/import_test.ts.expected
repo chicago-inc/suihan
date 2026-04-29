@@ -9,5 +9,12 @@
  */
 
 /** ξ app_name — identity (immutable) */
-export const appName = 'Spoxis' as const;
+export const appName = "Spoxis" as const;
 
+
+/* Kind manifest — 256-bit perpendicular encoding metadata */
+export const __kindManifest = {
+  'app_name': 'xi'
+} as const;
+
+export type KindOf<K extends keyof typeof __kindManifest> = typeof __kindManifest[K];

@@ -136,3 +136,25 @@ export function production(): unknown {
   return rt_tol;
 }
 
+
+/* Kind manifest — 256-bit perpendicular encoding metadata */
+export const __kindManifest = {
+  'community': 'xi',
+  'user': 'xi',
+  'event': 'xi',
+  'structural_role': 'xi',
+  'display_title': 'zeta',
+  'party_size': 'x',
+  'message': 'x',
+  'permission': 'xi',
+  'label': 'xi',
+  'membership': 'xi',
+  'attendance': 'xi',
+  'promote': 'rk',
+  'role_label': 'rk',
+  'resolve_member_view': 'rk',
+  'distance': 'xi',
+  'production': 'zeta'
+} as const;
+
+export type KindOf<K extends keyof typeof __kindManifest> = typeof __kindManifest[K];

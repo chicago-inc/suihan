@@ -28,3 +28,13 @@ export function buildList(a: number, b: number, c: number): number {
   return [a, b, c];
 }
 
+
+/* Kind manifest — 256-bit perpendicular encoding metadata */
+export const __kindManifest = {
+  'safe_name': 'xi',
+  'classify_tier': 'xi',
+  'make_label': 'xi',
+  'build_list': 'xi'
+} as const;
+
+export type KindOf<K extends keyof typeof __kindManifest> = typeof __kindManifest[K];

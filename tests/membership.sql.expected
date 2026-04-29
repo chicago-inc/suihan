@@ -115,3 +115,138 @@ AS $$
   SELECT to_jsonb(p_rt_tol)
 $$;
 
+
+-- Kind metadata (256-bit perpendicular encoding)
+CREATE TABLE IF NOT EXISTS _szh_kind_metadata (
+  symbol_name  text PRIMARY KEY,
+  kind         text NOT NULL,
+  source_file  text,
+  updated_at   timestamptz DEFAULT now()
+);
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('community', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('user', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('event', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('structural_role', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('display_title', 'zeta', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('party_size', 'x', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('message', 'x', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('permission', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('label', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('permission', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('community', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('membership', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('attendance', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('promote', 'rk', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('role_label', 'rk', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('resolve_member_view', 'rk', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('distance', 'xi', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
+INSERT INTO _szh_kind_metadata (symbol_name, kind, source_file)
+VALUES ('production', 'zeta', './tests/membership.szh')
+ON CONFLICT (symbol_name) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  source_file = EXCLUDED.source_file,
+  updated_at = now();
+
