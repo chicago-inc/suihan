@@ -362,6 +362,60 @@ static Program *build_merged_view(Program *prog) {
     return merged;
 }
 
+/* Journey/program names containing sprint identifiers, dates, or
+ * version numbers are temporal sediment at the naming layer.
+ * Surface name should describe the journey, not the sprint that
+ * produced it. */
+static void check_journey_program_temporal_naming(Program *prog,
+                                                   DiagList *diags) {
+    for (size_t i = 0; i < prog->count; i++) {
+        Decl *d = prog->decls[i];
+        if (d->type != DECL_JOURNEY && d->type != DECL_PROGRAM) continue;
+        if (!d->name.text) continue;
+
+        const char *n = d->name.text;
+        size_t len = strlen(n);
+
+        /* Pattern 1: contains a 4-digit year (20xx) */
+        for (size_t j = 0; j + 4 <= len; j++) {
+            if (n[j] == '2' && n[j+1] == '0' &&
+                n[j+2] >= '0' && n[j+2] <= '9' &&
+                n[j+3] >= '0' && n[j+3] <= '9') {
+                diag_warn(diags, DIAG_TEMPORAL_SEDIMENT, prog->filename,
+                          d->line, d->name.col,
+                          "%s '%s' name contains a year-like pattern — "
+                          "names should describe the journey, not when "
+                          "the sprint ran",
+                          decl_type_name(d->type), n);
+                goto next_decl;
+            }
+        }
+
+        /* Pattern 2: contains "_sprint" or "_v[0-9]" */
+        if (strstr(n, "_sprint") || strstr(n, "sprint_")) {
+            diag_warn(diags, DIAG_TEMPORAL_SEDIMENT, prog->filename,
+                      d->line, d->name.col,
+                      "%s '%s' name contains 'sprint' — names should "
+                      "describe the journey, not its origin sprint",
+                      decl_type_name(d->type), n);
+            goto next_decl;
+        }
+        for (size_t j = 0; j + 2 < len; j++) {
+            if (n[j] == '_' && n[j+1] == 'v' &&
+                n[j+2] >= '0' && n[j+2] <= '9') {
+                diag_warn(diags, DIAG_TEMPORAL_SEDIMENT, prog->filename,
+                          d->line, d->name.col,
+                          "%s '%s' name contains a version suffix — "
+                          "the journey should not be named for its "
+                          "implementation generation",
+                          decl_type_name(d->type), n);
+                goto next_decl;
+            }
+        }
+    next_decl: ;
+    }
+}
+
 void bloatlint(Program *prog, DiagList *diags) {
     /* Build merged view for cross-file reference checks */
     Program *merged = build_merged_view(prog);
@@ -373,6 +427,7 @@ void bloatlint(Program *prog, DiagList *diags) {
     check_scope_confusion(prog, diags);    /* local only */
     check_obtruding_doc(prog, diags);      /* local only */
     check_yoneda_gaps(merged, diags);      /* imported traversals observe morphisms */
+    check_journey_program_temporal_naming(prog, diags);
 
     free(merged->decls);
     free(merged);

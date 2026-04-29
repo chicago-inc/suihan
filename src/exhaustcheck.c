@@ -561,6 +561,61 @@ static void check_meihua_validation(Decl *d, Program *prog,
 }
 
 /* ------------------------------------------------------------ */
+/* Journey and program exhaustiveness                            */
+/* ------------------------------------------------------------ */
+
+/* A journey must enumerate at least one failure mode (or explicitly
+ * declare none possible by writing `failure_modes: none`). A journey
+ * without a failure_modes field is implicitly claiming the journey
+ * cannot fail — that's a strong claim; require it to be explicit. */
+static void check_journey_failure_modes(Decl *d, const char *filename,
+                                        DiagList *diags) {
+    if (d->type != DECL_JOURNEY) return;
+
+    bool has_failure_modes = false;
+    for (size_t i = 0; i < d->as.journey.field_count; i++) {
+        DeclField *f = &d->as.journey.fields[i];
+        if (f->label.text && strcmp(f->label.text, "failure_modes") == 0) {
+            has_failure_modes = true;
+            break;
+        }
+    }
+
+    if (!has_failure_modes) {
+        diag_error(diags, DIAG_SCOPE_CONFUSION, filename,
+                   d->name.line, 0,
+                   "journey '%s' must declare a failure_modes field "
+                   "(write `failure_modes: none` to assert the journey "
+                   "cannot fail — that is a constitutional claim)",
+                   d->name.text ? d->name.text : "?");
+    }
+}
+
+/* A program must declare its rk value — 0 for fixed prescription,
+ * > 0 for adaptive. A program without rk is undefined behavior. */
+static void check_program_rk(Decl *d, const char *filename, DiagList *diags) {
+    if (d->type != DECL_PROGRAM) return;
+
+    bool has_rk = false;
+    for (size_t i = 0; i < d->as.program_decl.field_count; i++) {
+        DeclField *f = &d->as.program_decl.fields[i];
+        if (f->label.text && (strcmp(f->label.text, "rk") == 0 ||
+                              strcmp(f->label.text, "R.k") == 0)) {
+            has_rk = true;
+            break;
+        }
+    }
+
+    if (!has_rk) {
+        diag_error(diags, DIAG_SCOPE_CONFUSION, filename,
+                   d->name.line, 0,
+                   "program '%s' must declare an rk field "
+                   "(0 = fixed prescription, > 0 = adaptive)",
+                   d->name.text ? d->name.text : "?");
+    }
+}
+
+/* ------------------------------------------------------------ */
 /* Public API                                                    */
 /* ------------------------------------------------------------ */
 
@@ -589,6 +644,12 @@ ExhaustReport exhaustcheck(Program *prog, DiagList *diags) {
     for (size_t i = 0; i < prog->count; i++) {
         check_meihua_validation(prog->decls[i], prog,
                                  prog->filename, diags, &report);
+    }
+
+    /* Journey + program field-level exhaustiveness */
+    for (size_t i = 0; i < prog->count; i++) {
+        check_journey_failure_modes(prog->decls[i], prog->filename, diags);
+        check_program_rk(prog->decls[i], prog->filename, diags);
     }
 
     /* Detect axiom_contrast_aa and report coverage status.
