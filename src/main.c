@@ -459,6 +459,28 @@ int main(int argc, char **argv) {
         return 2;
     }
 
+    /* Phase 6: `suhc audit <dir>` positional subcommand.
+     * Aliases to --audit <dir>, which runs the full check suite
+     * (perpcheck — including the Phase 5c graphics_rule contrast
+     * check, exhaustcheck, bloatlint, decidability, semcheck) over
+     * every .szh file in the directory. The full audit set the
+     * directive's Phase 6 asks for, with no flag prefix needed. */
+    if (strcmp(argv[1], "audit") == 0) {
+        if (argc < 3) {
+            fprintf(stderr,
+                "suhc audit: directory required.\n"
+                "Usage: suhc audit <ordbok-dir>\n"
+                "Runs perpcheck (with graphics_rule contrast),\n"
+                "exhaustcheck (with journey/program field checks),\n"
+                "bloatlint (with temporal-naming detection), and\n"
+                "the full lint pipeline over every .szh in the dir.\n");
+            return 2;
+        }
+        /* Rewrite argv: replace 'audit' with '--audit' and let the
+         * existing flag-driven path handle the rest. */
+        argv[1] = (char *)"--audit";
+    }
+
     /* Parse arguments */
     const char *filename = NULL;
     const char *output_path = NULL;
