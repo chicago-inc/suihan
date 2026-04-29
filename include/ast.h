@@ -258,6 +258,12 @@ struct Decl {
             DeclField  *fields;       /* prescribes, rk, composition */
             size_t      field_count;
         } program_decl;
+
+        /* DECL_GRAPHICS_RULE: contrast / visibility constraint on a surface class */
+        struct {
+            DeclField  *fields;       /* applies_to, foreground_vector, background_vector, min_contrast, failure_mode */
+            size_t      field_count;
+        } graphics_rule;
     } as;
 };
 

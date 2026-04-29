@@ -38,3 +38,4 @@ projection infer_decl_kind :
     songqiao -> "zeta"
     journey -> "rk"
     program -> "rk"
+    graphics_rule -> "xi"

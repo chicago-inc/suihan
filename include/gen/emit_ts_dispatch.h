@@ -42,6 +42,7 @@ static inline void emit_ts_dispatch(FILE *out, Decl *d) {
     case DECL_CONTAINMENT: break;
     case DECL_JOURNEY: emit_journey_ts(out, d); break;
     case DECL_PROGRAM: emit_program_ts(out, d); break;
+    case DECL_GRAPHICS_RULE: break;
     }
 }
 

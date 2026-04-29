@@ -160,6 +160,109 @@ static void check_binary_perp(Expr *expr, PerpRegistry *pr,
 }
 
 /* ------------------------------------------------------------ */
+/* graphics_rule contrast checking (Phase 5c)                    */
+/* ------------------------------------------------------------ */
+
+#include "color_math.h"
+
+/* Find a field by label in a graphics_rule's fields. */
+static Expr *gr_find_field(DeclField *fields, size_t count, const char *label) {
+    for (size_t i = 0; i < count; i++) {
+        if (fields[i].label.text && strcmp(fields[i].label.text, label) == 0) {
+            return fields[i].value;
+        }
+    }
+    return NULL;
+}
+
+/* Extract a color string from a field's value. Accepts:
+ *   - String literal:    "#7C3AED"
+ *   - Identifier:        primary_violet (treated as a token name; would be
+ *                        resolved against the colors registry in production)
+ * Returns NULL if not a recognized form. Caller does not free. */
+static const char *gr_color_string(Expr *e) {
+    if (!e) return NULL;
+    if (e->type == EXPR_STRING) return e->as.string.value;
+    if (e->type == EXPR_IDENT) return e->as.ident.name;
+    return NULL;
+}
+
+/* Extract a numeric ratio (e.g., 4.5) from a min_contrast field. */
+static double gr_min_contrast(Expr *e) {
+    if (!e) return 4.5;  /* WCAG AA default */
+    if (e->type == EXPR_NUMBER && e->as.number.text) {
+        return atof(e->as.number.text);
+    }
+    return 4.5;
+}
+
+/* Check a single graphics_rule for contrast compliance.
+ * Reads foreground_vector + background_vector + min_contrast and
+ * computes WCAG contrast. Errors if the pair fails the declared
+ * minimum.
+ *
+ * The check is direct: if the rule declares foreground=#FFF,
+ * background=#FFF, and min_contrast=4.5, the rule itself fails
+ * compilation because white-on-white has contrast ratio 1.0.
+ *
+ * This is the falsification handle the directive's Phase 5 asks
+ * for: an unconstitutional rule fails to compile. */
+static void check_graphics_rule(Decl *d, const char *filename, DiagList *diags) {
+    if (d->type != DECL_GRAPHICS_RULE) return;
+
+    Expr *fg = gr_find_field(d->as.graphics_rule.fields,
+                              d->as.graphics_rule.field_count,
+                              "foreground_vector");
+    Expr *bg = gr_find_field(d->as.graphics_rule.fields,
+                              d->as.graphics_rule.field_count,
+                              "background_vector");
+    Expr *min_c = gr_find_field(d->as.graphics_rule.fields,
+                                 d->as.graphics_rule.field_count,
+                                 "min_contrast");
+
+    if (!fg || !bg) {
+        diag_error(diags, DIAG_SCOPE_CONFUSION, filename,
+                   d->name.line, 0,
+                   "graphics_rule '%s' must declare both foreground_vector "
+                   "and background_vector",
+                   d->name.text ? d->name.text : "?");
+        return;
+    }
+
+    const char *fg_s = gr_color_string(fg);
+    const char *bg_s = gr_color_string(bg);
+    if (!fg_s || !bg_s) {
+        return;  /* Token-name form — would resolve via colors registry; skip */
+    }
+
+    /* Only evaluate when both look like literal hex/rgba strings */
+    if (fg_s[0] != '#' && strncmp(fg_s, "rgb", 3) != 0) return;
+    if (bg_s[0] != '#' && strncmp(bg_s, "rgb", 3) != 0) return;
+
+    double ratio = color_contrast_ratio(fg_s, bg_s);
+    if (ratio < 0) {
+        diag_warn(diags, DIAG_SCOPE_CONFUSION, filename,
+                  d->name.line, 0,
+                  "graphics_rule '%s': could not parse foreground or "
+                  "background color literal",
+                  d->name.text ? d->name.text : "?");
+        return;
+    }
+
+    double threshold = gr_min_contrast(min_c);
+    if (ratio < threshold) {
+        diag_error(diags, DIAG_SCOPE_CONFUSION, filename,
+                   d->name.line, 0,
+                   "graphics_rule '%s' fails contrast: ratio %.2f < %.2f "
+                   "for foreground=%s on background=%s — this is the "
+                   "constitutional class the rule binds, and it is "
+                   "currently unreadable",
+                   d->name.text ? d->name.text : "?",
+                   ratio, threshold, fg_s, bg_s);
+    }
+}
+
+/* ------------------------------------------------------------ */
 /* Public API                                                    */
 /* ------------------------------------------------------------ */
 
@@ -237,6 +340,11 @@ void perpcheck(Program *prog, DiagList *diags) {
         if (prog->decls[i]->type == DECL_SONGQIAO) has_songqiao = true;
     }
     (void)has_meihua; (void)has_zhulin; (void)has_songqiao;
+
+    /* Pass 4 (Phase 5c): graphics_rule contrast check */
+    for (size_t i = 0; i < prog->count; i++) {
+        check_graphics_rule(prog->decls[i], prog->filename, diags);
+    }
 
     pr_free(&pr);
 }

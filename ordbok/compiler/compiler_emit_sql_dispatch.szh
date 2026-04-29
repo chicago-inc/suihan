@@ -32,3 +32,4 @@ projection emit_sql_dispatch :
     kinded_value -> ""
     journey -> ""
     program -> ""
+    graphics_rule -> ""

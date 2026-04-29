@@ -42,6 +42,7 @@ static inline void emit_sql_dispatch(FILE *out, Decl *d) {
     case DECL_KINDED_VALUE: break;
     case DECL_JOURNEY: break;
     case DECL_PROGRAM: break;
+    case DECL_GRAPHICS_RULE: break;
     }
 }
 

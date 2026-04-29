@@ -29,5 +29,6 @@ projection keyword_dispatch :
     import -> "parse_import"
     journey -> "parse_journey"
     program -> "parse_program"
+    graphics_rule -> "parse_graphics_rule"
     zero -> "parse_zero_decl"
     _ -> ""

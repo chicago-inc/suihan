@@ -29,3 +29,4 @@ projection decl_type_name :
     import -> "import"
     journey -> "journey"
     program -> "program"
+    graphics_rule -> "graphics_rule"

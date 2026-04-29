@@ -36,7 +36,8 @@ typedef enum {
     DECL_SONGQIAO,
     DECL_IMPORT,
     DECL_JOURNEY,
-    DECL_PROGRAM
+    DECL_PROGRAM,
+    DECL_GRAPHICS_RULE
 } decl_t;
 
 static inline const char *decl_to_str(decl_t val) {
@@ -61,6 +62,7 @@ static inline const char *decl_to_str(decl_t val) {
     case DECL_IMPORT: return "import";
     case DECL_JOURNEY: return "journey";
     case DECL_PROGRAM: return "program";
+    case DECL_GRAPHICS_RULE: return "graphics_rule";
     }
     return "unknown";
 }
@@ -86,6 +88,7 @@ static inline decl_t decl_from_name(const char *name) {
     if (strcmp(name, "import") == 0) return DECL_IMPORT;
     if (strcmp(name, "journey") == 0) return DECL_JOURNEY;
     if (strcmp(name, "program") == 0) return DECL_PROGRAM;
+    if (strcmp(name, "graphics_rule") == 0) return DECL_GRAPHICS_RULE;
     return (decl_t)-1;
 }
 

@@ -33,3 +33,4 @@ projection emit_ts_dispatch :
     containment -> ""
     journey -> "emit_journey_ts"
     program -> "emit_program_ts"
+    graphics_rule -> ""

@@ -40,6 +40,7 @@ static inline Decl *keyword_dispatch(Parser *p, tok_t tok) {
     case TOK_IMPORT: return parse_import(p);
     case TOK_JOURNEY: return parse_journey(p);
     case TOK_PROGRAM: return parse_program(p);
+    case TOK_GRAPHICS_RULE: return parse_graphics_rule(p);
     case TOK_ZERO: return parse_zero_decl(p);
     default: return NULL;
     }

@@ -431,6 +431,9 @@ static Expr *parse_primary(Parser *p) {
         check(p, TOK_JOURNEY) || check(p, TOK_PROGRAM) ||
         check(p, TOK_TERMINUS) || check(p, TOK_FAILURE_MODES) ||
         check(p, TOK_PRESCRIBES) || check(p, TOK_COMPOSITION) ||
+        check(p, TOK_GRAPHICS_RULE) || check(p, TOK_APPLIES_TO) ||
+        check(p, TOK_FOREGROUND_VECTOR) || check(p, TOK_BACKGROUND_VECTOR) ||
+        check(p, TOK_MIN_CONTRAST) || check(p, TOK_FAILURE_MODE) ||
         check(p, TOK_DECIDABLE) || check(p, TOK_UNDECIDABLE) ||
         check(p, TOK_IF) || check(p, TOK_THEN) || check(p, TOK_ELSE) ||
         check(p, TOK_INVARIANT) || check(p, TOK_YIELDS) || check(p, TOK_CASES) ||
@@ -838,6 +841,9 @@ static void parse_body_fields(Parser *p, DeclField **fields, size_t *count) {
             check(p, TOK_CAST) || check(p, TOK_YIELDS) ||
             check(p, TOK_TERMINUS) || check(p, TOK_FAILURE_MODES) ||
             check(p, TOK_PRESCRIBES) || check(p, TOK_COMPOSITION) ||
+            check(p, TOK_APPLIES_TO) || check(p, TOK_FOREGROUND_VECTOR) ||
+            check(p, TOK_BACKGROUND_VECTOR) || check(p, TOK_MIN_CONTRAST) ||
+            check(p, TOK_FAILURE_MODE) ||
             check(p, TOK_RK) || check(p, TOK_XI) || check(p, TOK_ZETA) ||
             check(p, TOK_OMEGA)) {
             (*fields)[(*count)++] = parse_field(p);
@@ -1012,6 +1018,36 @@ static Decl *parse_program(Parser *p) {
     skip_newlines(p);
 
     parse_body_fields(p, &d->as.program_decl.fields, &d->as.program_decl.field_count);
+    return d;
+}
+
+/* Parse a graphics_rule declaration:
+ *   graphics_rule <name>:
+ *     applies_to: <surface_class>
+ *     foreground_vector: <hex|token>
+ *     background_vector: <hex|token>
+ *     min_contrast: <ratio>
+ *     failure_mode: <invisible | low_contrast | inverted>
+ * Phase 5b — a contrast/visibility constraint on a surface class. */
+static Decl *parse_graphics_rule(Parser *p) {
+    if (!check(p, TOK_IDENT)) {
+        diag_error(p->diags, DIAG_PARSE_ERROR, NULL,
+                   p->current.line, p->current.col,
+                   "expected graphics_rule name");
+        synchronize(p);
+        return NULL;
+    }
+    parser_advance(p);
+    Name name = token_to_name(p->previous);
+    define_name(p, name.text);
+
+    Decl *d = decl_new(DECL_GRAPHICS_RULE, KIND_NONE, name, name.line);
+
+    /* Optional colon before the body */
+    match(p, TOK_COLON);
+    skip_newlines(p);
+
+    parse_body_fields(p, &d->as.graphics_rule.fields, &d->as.graphics_rule.field_count);
     return d;
 }
 

@@ -40,6 +40,7 @@ static inline kind_t infer_decl_kind(decl_t val) {
     case DECL_SONGQIAO: return KIND_ZETA;
     case DECL_JOURNEY: return KIND_RK;
     case DECL_PROGRAM: return KIND_RK;
+    case DECL_GRAPHICS_RULE: return KIND_XI;
     }
     return KIND_XI;
 }

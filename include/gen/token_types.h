@@ -72,6 +72,12 @@ typedef enum {
     TOK_FAILURE_MODES,
     TOK_PRESCRIBES,
     TOK_COMPOSITION,
+    TOK_GRAPHICS_RULE,
+    TOK_APPLIES_TO,
+    TOK_FOREGROUND_VECTOR,
+    TOK_BACKGROUND_VECTOR,
+    TOK_MIN_CONTRAST,
+    TOK_FAILURE_MODE,
     TOK_COLON,
     TOK_PIPE,
     TOK_ARROW,
@@ -172,6 +178,12 @@ static inline const char *tok_to_str(tok_t val) {
     case TOK_FAILURE_MODES: return "failure_modes";
     case TOK_PRESCRIBES: return "prescribes";
     case TOK_COMPOSITION: return "composition";
+    case TOK_GRAPHICS_RULE: return "graphics_rule";
+    case TOK_APPLIES_TO: return "applies_to";
+    case TOK_FOREGROUND_VECTOR: return "foreground_vector";
+    case TOK_BACKGROUND_VECTOR: return "background_vector";
+    case TOK_MIN_CONTRAST: return "min_contrast";
+    case TOK_FAILURE_MODE: return "failure_mode";
     case TOK_COLON: return "colon";
     case TOK_PIPE: return "pipe";
     case TOK_ARROW: return "arrow";
@@ -273,6 +285,12 @@ static inline tok_t tok_from_name(const char *name) {
     if (strcmp(name, "failure_modes") == 0) return TOK_FAILURE_MODES;
     if (strcmp(name, "prescribes") == 0) return TOK_PRESCRIBES;
     if (strcmp(name, "composition") == 0) return TOK_COMPOSITION;
+    if (strcmp(name, "graphics_rule") == 0) return TOK_GRAPHICS_RULE;
+    if (strcmp(name, "applies_to") == 0) return TOK_APPLIES_TO;
+    if (strcmp(name, "foreground_vector") == 0) return TOK_FOREGROUND_VECTOR;
+    if (strcmp(name, "background_vector") == 0) return TOK_BACKGROUND_VECTOR;
+    if (strcmp(name, "min_contrast") == 0) return TOK_MIN_CONTRAST;
+    if (strcmp(name, "failure_mode") == 0) return TOK_FAILURE_MODE;
     if (strcmp(name, "colon") == 0) return TOK_COLON;
     if (strcmp(name, "pipe") == 0) return TOK_PIPE;
     if (strcmp(name, "arrow") == 0) return TOK_ARROW;

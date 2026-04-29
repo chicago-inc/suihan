@@ -71,6 +71,12 @@ static inline const char *token_type_name(tok_t val) {
     case TOK_FAILURE_MODES: return "failure_modes";
     case TOK_PRESCRIBES: return "prescribes";
     case TOK_COMPOSITION: return "composition";
+    case TOK_GRAPHICS_RULE: return "graphics_rule";
+    case TOK_APPLIES_TO: return "applies_to";
+    case TOK_FOREGROUND_VECTOR: return "foreground_vector";
+    case TOK_BACKGROUND_VECTOR: return "background_vector";
+    case TOK_MIN_CONTRAST: return "min_contrast";
+    case TOK_FAILURE_MODE: return "failure_mode";
     case TOK_IF: return "if";
     case TOK_THEN: return "then";
     case TOK_ELSE: return "else";
