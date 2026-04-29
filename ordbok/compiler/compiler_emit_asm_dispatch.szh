@@ -27,3 +27,5 @@ projection emit_asm_dispatch :
     import -> ""
     zero -> ""
     containment -> ""
+    journey -> ""
+    program -> ""

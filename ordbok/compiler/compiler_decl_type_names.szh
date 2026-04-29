@@ -27,3 +27,5 @@ projection decl_type_name :
     zhulin -> "zhulin"
     songqiao -> "songqiao"
     import -> "import"
+    journey -> "journey"
+    program -> "program"

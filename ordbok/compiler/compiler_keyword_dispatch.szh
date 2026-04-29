@@ -27,5 +27,7 @@ projection keyword_dispatch :
     zhulin -> "parse_exec_layer_zhulin"
     songqiao -> "parse_exec_layer_songqiao"
     import -> "parse_import"
+    journey -> "parse_journey"
+    program -> "parse_program"
     zero -> "parse_zero_decl"
     _ -> ""

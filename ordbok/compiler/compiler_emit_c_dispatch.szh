@@ -31,3 +31,5 @@ projection emit_c_dispatch :
     import -> "emit_c_import_comment"
     zero -> ""
     containment -> ""
+    journey -> ""
+    program -> ""

@@ -428,6 +428,9 @@ static Expr *parse_primary(Parser *p) {
         check(p, TOK_CAST) ||
         check(p, TOK_MEIHUA) || check(p, TOK_ZHULIN) || check(p, TOK_SONGQIAO) ||
         check(p, TOK_IMPORT) ||
+        check(p, TOK_JOURNEY) || check(p, TOK_PROGRAM) ||
+        check(p, TOK_TERMINUS) || check(p, TOK_FAILURE_MODES) ||
+        check(p, TOK_PRESCRIBES) || check(p, TOK_COMPOSITION) ||
         check(p, TOK_DECIDABLE) || check(p, TOK_UNDECIDABLE) ||
         check(p, TOK_IF) || check(p, TOK_THEN) || check(p, TOK_ELSE) ||
         check(p, TOK_INVARIANT) || check(p, TOK_YIELDS) || check(p, TOK_CASES) ||
@@ -832,7 +835,11 @@ static void parse_body_fields(Parser *p, DeclField **fields, size_t *count) {
             check(p, TOK_GOVERNED_BY) || check(p, TOK_INVARIANT) ||
             check(p, TOK_CONTEXT) || check(p, TOK_DATA) ||
             check(p, TOK_OPERATOR) || check(p, TOK_OUTPUT) ||
-            check(p, TOK_CAST) || check(p, TOK_YIELDS)) {
+            check(p, TOK_CAST) || check(p, TOK_YIELDS) ||
+            check(p, TOK_TERMINUS) || check(p, TOK_FAILURE_MODES) ||
+            check(p, TOK_PRESCRIBES) || check(p, TOK_COMPOSITION) ||
+            check(p, TOK_RK) || check(p, TOK_XI) || check(p, TOK_ZETA) ||
+            check(p, TOK_OMEGA)) {
             (*fields)[(*count)++] = parse_field(p);
         } else {
             parser_advance(p);
@@ -944,6 +951,67 @@ static Decl *parse_morphism(Parser *p) {
     skip_newlines(p);
 
     parse_body_fields(p, &d->as.morphism.fields, &d->as.morphism.field_count);
+    return d;
+}
+
+/* Parse a journey declaration:
+ *   journey <name>:
+ *     xi: { ... }
+ *     zeta: { ... }
+ *     rk: { ... }
+ *     omega: { ... }
+ *     terminus: <expr>
+ *     failure_modes: { ... }
+ * The journey-unit per the constitution's journey ordbok entry —
+ * an ordered, irreversible sequence of situated traversals through
+ * which an identity is transformed by context. */
+static Decl *parse_journey(Parser *p) {
+    if (!check(p, TOK_IDENT)) {
+        diag_error(p->diags, DIAG_PARSE_ERROR, NULL,
+                   p->current.line, p->current.col,
+                   "expected journey name");
+        synchronize(p);
+        return NULL;
+    }
+    parser_advance(p);
+    Name name = token_to_name(p->previous);
+    define_name(p, name.text);
+
+    Decl *d = decl_new(DECL_JOURNEY, KIND_NONE, name, name.line);
+
+    /* Optional colon before the body */
+    match(p, TOK_COLON);
+    skip_newlines(p);
+
+    parse_body_fields(p, &d->as.journey.fields, &d->as.journey.field_count);
+    return d;
+}
+
+/* Parse a program declaration:
+ *   program <name>:
+ *     prescribes: [<journey_name>, ...]
+ *     rk: <int>
+ *     composition: <serial | parallel | conditional>
+ * The program-primitive per D55 — a prescribed journey. */
+static Decl *parse_program(Parser *p) {
+    if (!check(p, TOK_IDENT)) {
+        diag_error(p->diags, DIAG_PARSE_ERROR, NULL,
+                   p->current.line, p->current.col,
+                   "expected program name");
+        synchronize(p);
+        return NULL;
+    }
+    parser_advance(p);
+    Name name = token_to_name(p->previous);
+    define_name(p, name.text);
+
+    Decl *d = decl_new(DECL_PROGRAM, KIND_NONE, name, name.line);
+
+    /* Optional colon before the body */
+    match(p, TOK_COLON);
+    skip_newlines(p);
+
+    parse_body_fields(p, &d->as.program_decl.fields, &d->as.program_decl.field_count);
     return d;
 }
 

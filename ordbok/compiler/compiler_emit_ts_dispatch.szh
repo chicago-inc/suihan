@@ -31,3 +31,5 @@ projection emit_ts_dispatch :
     import -> ""
     zero -> ""
     containment -> ""
+    journey -> ""
+    program -> ""

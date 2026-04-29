@@ -40,6 +40,8 @@ static inline void emit_sql_dispatch(FILE *out, Decl *d) {
     case DECL_COMMENSURABLE: break;
     case DECL_PERPENDICULAR: break;
     case DECL_KINDED_VALUE: break;
+    case DECL_JOURNEY: break;
+    case DECL_PROGRAM: break;
     }
 }
 

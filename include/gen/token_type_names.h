@@ -65,6 +65,12 @@ static inline const char *token_type_name(tok_t val) {
     case TOK_DECIDABLE: return "decidable";
     case TOK_UNDECIDABLE: return "undecidable";
     case TOK_IMPORT: return "import";
+    case TOK_JOURNEY: return "journey";
+    case TOK_PROGRAM: return "program";
+    case TOK_TERMINUS: return "terminus";
+    case TOK_FAILURE_MODES: return "failure_modes";
+    case TOK_PRESCRIBES: return "prescribes";
+    case TOK_COMPOSITION: return "composition";
     case TOK_IF: return "if";
     case TOK_THEN: return "then";
     case TOK_ELSE: return "else";

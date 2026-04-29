@@ -3,4 +3,4 @@
 -- Emits to include/gen/decl_types.h via --target c.
 -- M1 milestone: replaces hand-written DeclType enum in ast.h.
 
-dimension decl : unit | zero | magnitude | vector | dimension | dependency | containment | morphism | projection | traversal | incommensurable | commensurable | perpendicular | kinded_value | meihua | zhulin | songqiao | import
+dimension decl : unit | zero | magnitude | vector | dimension | dependency | containment | morphism | projection | traversal | incommensurable | commensurable | perpendicular | kinded_value | meihua | zhulin | songqiao | import | journey | program

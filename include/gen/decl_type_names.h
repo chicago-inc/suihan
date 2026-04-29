@@ -37,6 +37,8 @@ static inline const char *decl_type_name(decl_t val) {
     case DECL_ZHULIN: return "zhulin";
     case DECL_SONGQIAO: return "songqiao";
     case DECL_IMPORT: return "import";
+    case DECL_JOURNEY: return "journey";
+    case DECL_PROGRAM: return "program";
     }
     return "<unknown>";
 }

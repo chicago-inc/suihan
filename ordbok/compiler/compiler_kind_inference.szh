@@ -36,3 +36,5 @@ projection infer_decl_kind :
     meihua -> "xi"
     zhulin -> "rk"
     songqiao -> "zeta"
+    journey -> "rk"
+    program -> "rk"

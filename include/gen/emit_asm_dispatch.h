@@ -40,6 +40,8 @@ static inline void emit_asm_dispatch(FILE *out, Decl *d) {
     case DECL_IMPORT: break;
     case DECL_ZERO: break;
     case DECL_CONTAINMENT: break;
+    case DECL_JOURNEY: break;
+    case DECL_PROGRAM: break;
     }
 }
 

@@ -246,6 +246,18 @@ struct Decl {
             char    *module_name;    /* "foundational" — no extension */
             Program *resolved;       /* populated by resolver, NULL initially */
         } import_decl;
+
+        /* DECL_JOURNEY: ξ;ζ;R.k;ω;terminus;failure_modes — the journey-unit */
+        struct {
+            DeclField  *fields;       /* xi, zeta, rk, omega, terminus, failure_modes */
+            size_t      field_count;
+        } journey;
+
+        /* DECL_PROGRAM: prescribes a list of journeys with rk and composition */
+        struct {
+            DeclField  *fields;       /* prescribes, rk, composition */
+            size_t      field_count;
+        } program_decl;
     } as;
 };
 

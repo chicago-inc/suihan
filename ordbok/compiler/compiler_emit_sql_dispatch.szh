@@ -30,3 +30,5 @@ projection emit_sql_dispatch :
     commensurable -> ""
     perpendicular -> ""
     kinded_value -> ""
+    journey -> ""
+    program -> ""

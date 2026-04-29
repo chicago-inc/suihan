@@ -40,6 +40,8 @@ static inline void emit_c_dispatch(FILE *out, Decl *d) {
     case DECL_IMPORT: emit_c_import_comment(out, d); break;
     case DECL_ZERO: break;
     case DECL_CONTAINMENT: break;
+    case DECL_JOURNEY: break;
+    case DECL_PROGRAM: break;
     }
 }
 

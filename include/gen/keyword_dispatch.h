@@ -38,6 +38,8 @@ static inline Decl *keyword_dispatch(Parser *p, tok_t tok) {
     case TOK_ZHULIN: return parse_exec_layer_zhulin(p);
     case TOK_SONGQIAO: return parse_exec_layer_songqiao(p);
     case TOK_IMPORT: return parse_import(p);
+    case TOK_JOURNEY: return parse_journey(p);
+    case TOK_PROGRAM: return parse_program(p);
     case TOK_ZERO: return parse_zero_decl(p);
     default: return NULL;
     }

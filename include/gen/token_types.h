@@ -66,6 +66,12 @@ typedef enum {
     TOK_THEN,
     TOK_ELSE,
     TOK_IMPORT,
+    TOK_JOURNEY,
+    TOK_PROGRAM,
+    TOK_TERMINUS,
+    TOK_FAILURE_MODES,
+    TOK_PRESCRIBES,
+    TOK_COMPOSITION,
     TOK_COLON,
     TOK_PIPE,
     TOK_ARROW,
@@ -160,6 +166,12 @@ static inline const char *tok_to_str(tok_t val) {
     case TOK_THEN: return "then";
     case TOK_ELSE: return "else";
     case TOK_IMPORT: return "import";
+    case TOK_JOURNEY: return "journey";
+    case TOK_PROGRAM: return "program";
+    case TOK_TERMINUS: return "terminus";
+    case TOK_FAILURE_MODES: return "failure_modes";
+    case TOK_PRESCRIBES: return "prescribes";
+    case TOK_COMPOSITION: return "composition";
     case TOK_COLON: return "colon";
     case TOK_PIPE: return "pipe";
     case TOK_ARROW: return "arrow";
@@ -255,6 +267,12 @@ static inline tok_t tok_from_name(const char *name) {
     if (strcmp(name, "then") == 0) return TOK_THEN;
     if (strcmp(name, "else") == 0) return TOK_ELSE;
     if (strcmp(name, "import") == 0) return TOK_IMPORT;
+    if (strcmp(name, "journey") == 0) return TOK_JOURNEY;
+    if (strcmp(name, "program") == 0) return TOK_PROGRAM;
+    if (strcmp(name, "terminus") == 0) return TOK_TERMINUS;
+    if (strcmp(name, "failure_modes") == 0) return TOK_FAILURE_MODES;
+    if (strcmp(name, "prescribes") == 0) return TOK_PRESCRIBES;
+    if (strcmp(name, "composition") == 0) return TOK_COMPOSITION;
     if (strcmp(name, "colon") == 0) return TOK_COLON;
     if (strcmp(name, "pipe") == 0) return TOK_PIPE;
     if (strcmp(name, "arrow") == 0) return TOK_ARROW;

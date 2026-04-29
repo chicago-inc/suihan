@@ -34,7 +34,9 @@ typedef enum {
     DECL_MEIHUA,
     DECL_ZHULIN,
     DECL_SONGQIAO,
-    DECL_IMPORT
+    DECL_IMPORT,
+    DECL_JOURNEY,
+    DECL_PROGRAM
 } decl_t;
 
 static inline const char *decl_to_str(decl_t val) {
@@ -57,6 +59,8 @@ static inline const char *decl_to_str(decl_t val) {
     case DECL_ZHULIN: return "zhulin";
     case DECL_SONGQIAO: return "songqiao";
     case DECL_IMPORT: return "import";
+    case DECL_JOURNEY: return "journey";
+    case DECL_PROGRAM: return "program";
     }
     return "unknown";
 }
@@ -80,6 +84,8 @@ static inline decl_t decl_from_name(const char *name) {
     if (strcmp(name, "zhulin") == 0) return DECL_ZHULIN;
     if (strcmp(name, "songqiao") == 0) return DECL_SONGQIAO;
     if (strcmp(name, "import") == 0) return DECL_IMPORT;
+    if (strcmp(name, "journey") == 0) return DECL_JOURNEY;
+    if (strcmp(name, "program") == 0) return DECL_PROGRAM;
     return (decl_t)-1;
 }
 
