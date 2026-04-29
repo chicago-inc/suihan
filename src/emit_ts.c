@@ -1699,6 +1699,124 @@ static void emit_import(FILE *out, Decl *d, Program *local_prog) {
 }
 
 /* ------------------------------------------------------------ */
+/* journey + program emit                                         */
+/* ------------------------------------------------------------ */
+
+/* Find a field by label; returns its value Expr or NULL. */
+static Expr *find_field(DeclField *fields, size_t count, const char *label) {
+    for (size_t i = 0; i < count; i++) {
+        if (fields[i].label.text && strcmp(fields[i].label.text, label) == 0) {
+            return fields[i].value;
+        }
+    }
+    return NULL;
+}
+
+/* Render an Expr as a TypeScript type or value, conservatively.
+ * Strings come through as their text; identifiers as TS identifiers;
+ * anything else falls back to `any`. The journey emitter doesn't
+ * enforce TS type-correctness — that's the perpcheck pass. */
+static char *expr_to_ts_type(Expr *e) {
+    if (!e) return strdup("any");
+    if (e->type == EXPR_IDENT && e->as.ident.name) {
+        return to_camel(e->as.ident.name);
+    }
+    if (e->type == EXPR_STRING && e->as.string.value) {
+        return strdup(e->as.string.value);
+    }
+    return strdup("any");
+}
+
+/* Emit a TypeScript function scaffold for a journey declaration.
+ * Form:
+ *   /\*\* journey <name> ... \*\/
+ *   export async function <camelName>(
+ *     xi: <xi-type>,
+ *     zeta: <zeta-type>
+ *   ): Promise<<omega-type>> {
+ *     throw new Error('journey <name>: not implemented');
+ *   }
+ */
+static void emit_journey_ts(FILE *out, Decl *d) {
+    if (!d->name.text) return;
+    char *fn_name = to_camel(d->name.text);
+
+    Expr *xi = find_field(d->as.journey.fields, d->as.journey.field_count, "xi");
+    Expr *zeta = find_field(d->as.journey.fields, d->as.journey.field_count, "zeta");
+    Expr *omega = find_field(d->as.journey.fields, d->as.journey.field_count, "omega");
+    Expr *terminus = find_field(d->as.journey.fields, d->as.journey.field_count, "terminus");
+    Expr *failure_modes = find_field(d->as.journey.fields, d->as.journey.field_count, "failure_modes");
+
+    char *xi_t = expr_to_ts_type(xi);
+    char *zeta_t = expr_to_ts_type(zeta);
+    char *omega_t = expr_to_ts_type(omega);
+
+    fprintf(out, "/**\n");
+    fprintf(out, " * journey %s\n", d->name.text);
+    fprintf(out, " *   ξ:  %s\n", xi_t);
+    fprintf(out, " *   ζ:  %s\n", zeta_t);
+    fprintf(out, " *   ω:  %s\n", omega_t);
+    if (terminus && terminus->type == EXPR_IDENT && terminus->as.ident.name) {
+        fprintf(out, " *   terminus: %s\n", terminus->as.ident.name);
+    }
+    if (failure_modes && failure_modes->type == EXPR_IDENT && failure_modes->as.ident.name) {
+        fprintf(out, " *   failure_modes: %s\n", failure_modes->as.ident.name);
+    }
+    fprintf(out, " * Generated stub — implement under specification harness.\n");
+    fprintf(out, " */\n");
+    fprintf(out, "export async function %s(\n", fn_name);
+    fprintf(out, "  xi: %s,\n", xi_t);
+    fprintf(out, "  zeta: %s\n", zeta_t);
+    fprintf(out, "): Promise<%s> {\n", omega_t);
+    fprintf(out, "  throw new Error('journey %s: not implemented');\n", d->name.text);
+    fprintf(out, "}\n\n");
+
+    free(xi_t);
+    free(zeta_t);
+    free(omega_t);
+    free(fn_name);
+}
+
+/* Emit a TypeScript program scaffold — a const carrying the prescription. */
+static void emit_program_ts(FILE *out, Decl *d) {
+    if (!d->name.text) return;
+    char *const_name = to_camel(d->name.text);
+
+    Expr *prescribes = find_field(d->as.program_decl.fields, d->as.program_decl.field_count, "prescribes");
+    Expr *rk = find_field(d->as.program_decl.fields, d->as.program_decl.field_count, "rk");
+    Expr *composition = find_field(d->as.program_decl.fields, d->as.program_decl.field_count, "composition");
+
+    fprintf(out, "/**\n");
+    fprintf(out, " * program %s — a prescribed journey (D55).\n", d->name.text);
+    fprintf(out, " */\n");
+    fprintf(out, "export const %s = {\n", const_name);
+    fprintf(out, "  prescribes: ");
+    if (prescribes && prescribes->type == EXPR_LIST) {
+        fprintf(out, "[");
+        for (size_t i = 0; i < prescribes->as.list.count; i++) {
+            Expr *item = prescribes->as.list.items[i];
+            if (item && item->type == EXPR_IDENT && item->as.ident.name) {
+                if (i > 0) fprintf(out, ", ");
+                fprintf(out, "'%s'", item->as.ident.name);
+            }
+        }
+        fprintf(out, "]");
+    } else if (prescribes && prescribes->type == EXPR_IDENT && prescribes->as.ident.name) {
+        fprintf(out, "['%s']", prescribes->as.ident.name);
+    } else {
+        fprintf(out, "[]");
+    }
+    fprintf(out, ",\n");
+    fprintf(out, "  rk: %s,\n",
+        (rk && rk->type == EXPR_NUMBER && rk->as.number.text) ? rk->as.number.text : "0");
+    fprintf(out, "  composition: '%s',\n",
+        (composition && composition->type == EXPR_IDENT && composition->as.ident.name) ? composition->as.ident.name : "serial");
+    fprintf(out, "} as const;\n\n");
+
+    free(const_name);
+}
+
+/* ------------------------------------------------------------ */
 /* M4: dispatch wrappers — uniform (FILE*, Decl*) signature      */
 /* ------------------------------------------------------------ */
 
