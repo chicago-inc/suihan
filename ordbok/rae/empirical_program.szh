@@ -1,0 +1,82 @@
+-- empirical_program.szh
+-- The experimental program governing per-probe journeys.
+--
+-- Per the directive surfaced in PROGRAM_AUDIT_FINDINGS §14 → §14b:
+-- the terminal has been running probes journey-by-journey without
+-- a program above them. The §14 +13pp ANLI R3 claim at n=100
+-- collapsed to +2pp at n=200 and +4.1pp at n=1000 because no
+-- program-level decision points were declared before the probe
+-- ran. Each probe interpreted its own number as confirmed.
+--
+-- This ordbok declares the program: per-probe journeys execute
+-- within it, verdicts are determined by the program's pre-
+-- registered decision points, and the program itself produces
+-- one of {confirmed, falsified, unmeasurable, scope-narrowed}
+-- for each registered claim. The §14 → §14b correction is the
+-- empirical surfacing case; this declaration prevents the same
+-- failure mode from recurring.
+--
+-- Suihan's TypeScript emitter produces function signatures from
+-- each journey declaration; the implementation fills in the body
+-- under the program's constraints. The implementation lands in a
+-- follow-up sprint per D55's program-edit / program-execution-
+-- edit separation.
+
+-- Step 1: a claim about substrate behavior is registered with
+-- prediction and pre-registered decision points (noise floor,
+-- sample-size threshold, corpus surface, verdict criteria). A
+-- claim cannot be tested before it is registered.
+journey declare_claim
+  xi: claim_text_with_prediction_and_decision_points
+  zeta: empirical_program_with_active_claims_table
+  rk: parse_then_register_then_pin_decision_points
+  omega: registered_claim_with_id_and_pinned_thresholds
+  terminus: claim_pre_registered_in_program
+  failure_modes: prediction_unfalsifiable_or_decision_points_missing
+
+-- Step 2: a probe runs one corpus at one sample size and emits
+-- accuracy with binomial standard error. The probe is scoped to
+-- one registered claim; ad-hoc probes without a parent claim
+-- are exploratory and cannot ground a verdict.
+journey run_probe
+  xi: registered_claim_with_corpus_and_sample_size
+  zeta: cascade_engine_with_substrate_and_dataset
+  rk: load_then_score_then_compute_accuracy_with_se
+  omega: probe_result_with_accuracy_and_binomial_se
+  terminus: probe_result_attached_to_claim
+  failure_modes: corpus_unavailable_or_sample_below_threshold
+
+-- Step 3: probe results aggregate against the claim's decision
+-- points. The program holds the running per-corpus vector and
+-- the consistency-of-direction across corpora. Aggregation does
+-- NOT collapse the per-corpus vector to a scalar (D54 vector
+-- reporting).
+journey aggregate_evidence
+  xi: registered_claim_with_probe_results
+  zeta: empirical_program
+  rk: stratify_by_corpus_then_compute_per_corpus_signal_vector
+  omega: aggregated_evidence_with_per_corpus_accuracy_and_consistency
+  terminus: evidence_summary_ready_for_verdict
+  failure_modes: insufficient_corpora_or_perpendicular_test_surface
+
+-- Step 4: the verdict compares aggregated evidence against the
+-- claim's pre-registered decision points and emits one of four
+-- classifications. The verdict is recorded as the program-level
+-- ω; per-probe ω values are inputs to this journey, not outputs
+-- of the program.
+journey emit_verdict
+  xi: registered_claim_with_aggregated_evidence
+  zeta: empirical_program_with_decision_points
+  rk: compare_evidence_to_thresholds_then_classify
+  omega: verdict_with_classification_and_supporting_data
+  terminus: verdict_recorded_in_program_audit_findings
+  failure_modes: evidence_below_sample_threshold_or_decision_points_ambiguous
+
+-- The composing program — gates per-probe journeys against pre-
+-- registered claims and emits program-level verdicts. Serial
+-- composition because the journeys must run in order: declare
+-- before probe, probe before aggregate, aggregate before verdict.
+program rae_empirical_program
+  prescribes: [declare_claim, run_probe, aggregate_evidence, emit_verdict]
+  rk: 1
+  composition: serial
