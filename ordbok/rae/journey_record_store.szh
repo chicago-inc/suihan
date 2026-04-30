@@ -1,0 +1,51 @@
+-- journey_record_store.szh
+-- Persistent storage for user-submitted journeys.
+--
+-- Per the directive: "User journeys persist. A journey submitted
+-- today should be retrievable tomorrow, branchable, composable
+-- with new journeys."
+--
+-- These ordbok declarations name the journeys that read and write
+-- the journey-record store. Suihan's PostgreSQL emitter produces
+-- the table schema; the TypeScript emitter produces the consumer
+-- hooks. The migration SQL ships separately at
+-- migrations/20260429_journey_records.sql, regeneratable from this
+-- ordbok via `suhc ... --target sql`.
+
+-- A user submits a query through the user-surface's submit_query
+-- journey; the result is persisted as a journey-record carrying
+-- the full polynomial decomposition + cascade metadata.
+journey persist_journey_record
+  xi: cascade_result_with_user_id
+  zeta: postgres_session_with_journey_records_table
+  rk: serialize_polynomial_then_insert_then_index
+  omega: stored_journey_record_with_id
+  terminus: row_committed_to_journey_records
+  failure_modes: serialization_failure_or_db_unavailable
+
+-- The user retrieves their own journeys by terminus, depth,
+-- category-membership, or residual-class.
+journey query_user_journeys
+  xi: user_id_with_query_filters
+  zeta: postgres_session_with_index_on_terminus_and_depth
+  rk: build_select_then_filter_then_paginate
+  omega: list_of_stored_journey_records
+  terminus: result_set_returned
+  failure_modes: no_journeys_match_filters
+
+-- A branch journey carries a parent_id; the surface walks parent
+-- chains to display the journey-tree.
+journey resolve_parent_chain
+  xi: leaf_journey_id
+  zeta: postgres_session
+  rk: recursive_select_on_parent_id
+  omega: ordered_chain_from_root_to_leaf
+  terminus: chain_returned
+  failure_modes: cycle_in_parent_chain_or_orphaned_node
+
+-- The composing program — the journey-record store as a prescribed
+-- set of CRUD operations.
+program rae_journey_record_store
+  prescribes: [persist_journey_record, query_user_journeys, resolve_parent_chain]
+  rk: 0
+  composition: parallel

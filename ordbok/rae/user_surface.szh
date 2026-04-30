@@ -1,0 +1,63 @@
+-- user_surface.szh
+-- RAE user-interaction surface journeys.
+-- The bicycle metaphor requires a surface where the user submits
+-- cognition and sees the substrate amplifying it. Per the directive:
+-- the surface presents the polynomial decomposition, the residual
+-- between two queries, the branch from any vertex, the promoted
+-- categories the path traversed.
+--
+-- These ordbok declarations name the load-bearing journeys for that
+-- surface. Suihan's TypeScript emitter produces function signatures
+-- and Vitest scaffolding from each declaration; the implementation
+-- fills in the body under the constraints the journey schema fixes.
+
+-- The user submits a query (premise/hypothesis/question/problem),
+-- the cascade computes the polynomial, the surface returns the
+-- structured decomposition.
+journey submit_query
+  xi: query_text_with_session
+  zeta: cascade_engine_with_substrate
+  rk: tokenize_then_cascade_then_decompose
+  omega: cascade_result_with_polynomial
+  terminus: polynomial_decomposition_returned
+  failure_modes: empty_query_or_no_content_tokens
+
+-- The user submits two related queries; the surface computes the
+-- polynomial residual between them and displays it as the journey-
+-- gap between the two terminus vertices.
+journey compute_residual
+  xi: pair_of_queries_with_session
+  zeta: cascade_engine
+  rk: score_both_then_subtract_polynomial
+  omega: residual_polynomial_with_gap_metrics
+  terminus: residual_displayed
+  failure_modes: queries_have_disjoint_seed_sets
+
+-- The user picks a vertex in the displayed polynomial and submits
+-- a refined journey from that vertex; the surface produces a new
+-- branch in the journey-record.
+journey branch_from_vertex
+  xi: parent_journey_with_pivot_vertex_and_refinement
+  zeta: cascade_engine
+  rk: tokenize_refinement_then_cascade_from_pivot
+  omega: branch_journey_with_parent_reference
+  terminus: branch_persisted_with_parent_link
+  failure_modes: pivot_vertex_not_in_parent_polynomial
+
+-- The user views which categories the path traversed; the surface
+-- queries the cluster-promotion engine and returns the cluster
+-- members for each category vertex on the path.
+journey enumerate_traversed_categories
+  xi: cascade_result_with_promoted_engine
+  zeta: cluster_membership_index
+  rk: walk_polynomial_then_lookup_categories
+  omega: category_membership_per_vertex
+  terminus: category_sidebar_populated
+  failure_modes: no_categories_promoted_for_substrate
+
+-- The composing program — the user-interaction surface as a
+-- prescribed sequence of journeys (the bicycle's gear-train).
+program rae_user_surface
+  prescribes: [submit_query, compute_residual, branch_from_vertex, enumerate_traversed_categories]
+  rk: 1
+  composition: serial
