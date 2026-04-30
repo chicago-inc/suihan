@@ -1,0 +1,79 @@
+-- router.szh
+-- The router: control element above the substrate's components.
+--
+-- Engineering reframe: the unified equation {xi; (*zeta, *x)R.k}
+-- : {omega, delta_rk} is a closed-loop feedback control system
+-- at full generality. xi is the controlled variable's current
+-- state; zeta is the measurement of deviation from setpoint;
+-- R.k is the corrective transformation; omega is the new state;
+-- delta_rk is the residual that drives the next loop.
+--
+-- The substrate has process units (kernel cascade, journey
+-- cascade, polynomial composition) but no controller. Inputs
+-- arrive without dispatch logic; outputs are produced without
+-- a feedback path. The router fills that gap. It measures the
+-- input's task type and structural characteristics, looks up
+-- the operating range of each available component, and
+-- dispatches to the component whose operating range contains
+-- the input. Inputs outside all components' operating ranges
+-- produce graceful degradation (explicit failure with
+-- explanation, not silent wrong output).
+--
+-- The router unblocks the user-surface (submit_query has
+-- something to call) and shifts the empirical program from
+-- hypothesis-falsification mode to operating-range-
+-- characterization mode. The cascades stop being competitors
+-- for a single best representation and become characterized
+-- components in a dispatched system.
+
+-- Step 1: characterize a component's operating range. Run the
+-- component against representative inputs across the test
+-- surface; measure where reliability degrades; record the
+-- boundary as a range specification. This journey runs at
+-- characterization time (during empirical-program probes); the
+-- output feeds the dispatch journey at deployment time.
+journey characterize_operating_range
+  xi: component_with_test_inputs_and_metrics
+  zeta: empirical_program_with_corpus_test_surface
+  rk: run_component_then_measure_then_classify_range_boundary
+  omega: operating_range_specification_with_input_characteristics
+  terminus: range_recorded_in_router_table
+  failure_modes: insufficient_test_data_or_metrics_unstable
+
+-- Step 2: route an input to the matching component. The
+-- controller's primary action. Measure the input's task type
+-- and structural characteristics; check each registered
+-- component's operating range; dispatch to the first matching
+-- component or fall through to graceful degradation.
+journey route_input
+  xi: input_with_task_type_and_text
+  zeta: router_table_with_component_operating_ranges
+  rk: characterize_input_then_match_then_dispatch
+  omega: component_output_with_dispatch_record
+  terminus: output_returned_to_caller
+  failure_modes: no_component_operating_range_matches_input
+
+-- Step 3: graceful degradation. When no component's operating
+-- range contains the input, return an explicit failure with
+-- explanation rather than producing silent wrong output. The
+-- user (or upstream caller) receives a typed failure naming
+-- which characteristics of the input fell outside known
+-- ranges, so they can either rephrase the input or treat the
+-- system's limit as the answer.
+journey report_outside_range
+  xi: input_outside_all_component_operating_ranges
+  zeta: router_table_with_failure_explanation_templates
+  rk: identify_unmatched_characteristics_then_format_failure
+  omega: typed_failure_with_explanation_and_unmatched_axes
+  terminus: failure_returned_to_caller
+  failure_modes: explanation_template_missing_for_unmatched_axis
+
+-- The composing program — the closed-loop controller for the
+-- substrate. Parallel composition because characterize and
+-- route can run concurrently (characterize feeds the table
+-- that route reads), but a given input flows serially through
+-- route → (component | report_outside_range).
+program rae_router_program
+  prescribes: [characterize_operating_range, route_input, report_outside_range]
+  rk: 1
+  composition: parallel
