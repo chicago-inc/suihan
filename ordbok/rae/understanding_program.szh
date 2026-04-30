@@ -1,0 +1,108 @@
+-- understanding_program.szh
+-- The understanding program: tests claims about situated
+-- deployment of knowledge, not knowledge organization itself.
+--
+-- Per D30 (Logarithmic Compression Law): Knowledge is the full
+-- morphism space (the substrate's stored relational structure);
+-- Understanding is the activated subset — the morphisms that
+-- light up for a specific query through a specific context to
+-- produce a specific output. Understanding = log(Knowledge):
+-- contextual compression of stored relational structure into a
+-- situation-appropriate response.
+--
+-- The empirical_program (sibling .szh) tests claims about how
+-- the substrate's knowledge is organized — does the journey
+-- cascade beat the kernel cascade across corpora, do the
+-- cascades have orthogonal biases, etc. Those claims have a
+-- benchmark test surface (MNLI, ANLI R3, SNLI, BoolQ, etc.)
+-- with ground-truth labels.
+--
+-- This program tests claims about situated deployment — given
+-- a specific user with a specific context asking a specific
+-- question, does the substrate produce the response the
+-- situation calls for. Those claims have a different test
+-- surface: the rae_user_surface declared in user_surface.szh,
+-- deployed against actual users with actual queries, with
+-- verdicts produced by the participants in the situation
+-- about whether the response was fitting.
+--
+-- Knowledge has truth conditions (a morphism is correct or
+-- incorrect; a polynomial composes or doesn't). Understanding
+-- has appropriateness conditions (a response is fitting or
+-- unfitting; useful or useless; what was needed or off-target).
+-- Different evaluation regimes; different programs.
+--
+-- The four understanding journeys decompose along the
+-- perception-communication pipeline (ordbok): each user query
+-- enters the perception stage; each response goes through
+-- communication and is perceived by the user; the loop closes.
+-- The pipeline IS the understanding loop.
+
+-- Step 1: bind an unsituated input (a query, a question, a
+-- problem) to a specific situational context (this user, this
+-- session, this prior history, this purpose). Pre-situated
+-- inputs are the substrate of knowledge probes; situated
+-- inputs are the substrate of understanding probes.
+journey situate_input
+  xi: unsituated_query_text
+  zeta: user_session_with_history_and_context
+  rk: bind_query_to_context_then_compute_situational_xi
+  omega: situated_input_with_context_bindings
+  terminus: input_situated_for_deployment
+  failure_modes: no_user_context_available_or_history_unbound
+
+-- Step 2: run the unified equation in the situated context.
+-- The substrate's knowledge resources (kernel cascade, journey
+-- cascade, polynomial composition) are dispatched against the
+-- situated input to produce a situation-appropriate response.
+-- Per D30: this is Knowledge → Understanding, the contextual
+-- compression that activates the relevant subset.
+journey compute_response_for_situation
+  xi: situated_input_with_context_bindings
+  zeta: knowledge_substrate_with_dispatch_routing
+  rk: dispatch_to_appropriate_resource_then_score_then_compose
+  omega: response_polynomial_with_journey_and_dispatch_record
+  terminus: response_produced_for_situation
+  failure_modes: no_knowledge_resource_fits_situation_or_dispatch_ambiguous
+
+-- Step 3: evaluate whether the produced response matches what
+-- the situation called for. The participants in the situation
+-- (typically the user) provide the fit signal; the program
+-- records the gap between what was produced and what was
+-- needed. Knowledge is evaluated against ground truth;
+-- understanding is evaluated against situational fit. Different
+-- verdict shape.
+journey evaluate_situational_fit
+  xi: response_polynomial_with_journey
+  zeta: situated_input_with_user_feedback_signal
+  rk: compare_response_to_situational_need_then_compute_delta
+  omega: fit_assessment_with_delta_rk_and_residual_classification
+  terminus: fit_recorded_for_adaptation
+  failure_modes: no_feedback_available_or_situation_underspecified
+
+-- Step 4: close the perception-communication loop. Update
+-- routing, knowledge, or both based on fit assessment. The
+-- adaptation is the understanding-of-understanding step:
+-- recognizing whether the substrate's deployment was fitting
+-- and updating to deploy better next time. Without this step,
+-- the loop is open and the substrate cannot improve at
+-- understanding regardless of how much knowledge it accumulates.
+journey adapt_from_fit
+  xi: fit_assessment_with_delta_rk
+  zeta: knowledge_substrate_with_routing_table
+  rk: update_routing_or_knowledge_then_re_check_loop_closure
+  omega: updated_substrate_with_perception_communication_loop_closed
+  terminus: adaptation_complete_loop_closed
+  failure_modes: adaptation_signal_below_noise_or_routing_unstable
+
+-- The composing program — gates situated-deployment cycles
+-- against pre-registered understanding claims. Serial
+-- composition because the journeys must run in order: situate
+-- before compute, compute before evaluate, evaluate before
+-- adapt. Each cycle closes the perception-communication loop
+-- and the next cycle operates on a substrate that includes
+-- prior-cycle residue.
+program rae_understanding_program
+  prescribes: [situate_input, compute_response_for_situation, evaluate_situational_fit, adapt_from_fit]
+  rk: 2
+  composition: serial
