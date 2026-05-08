@@ -1,8 +1,32 @@
 # CONSTITUTION.md — Suihan Compiler (ξ)
 
-Every named principle in this document is subject to itself.
-This is the governing document for the suhc compiler project.
-Self-contained. Shares axiom and ordbok with the parent constitution.
+## Purpose
+
+Push suhc monotonically toward **fixed-point convergence between
+compiler and ordbok under monotonic ordbok-coverage growth** — the
+Suihan projection of the parent constitutions' rigorous-elegance-
+under-recursive-self-application goal. Three perpendicular axes of
+α:α:
+
+- **Elegance** — α:α at the kind-grammar layer. Three scopes hold:
+  local (one kind per AST node), cross-locus (perpendicularity —
+  meihua/zhulin/songqiao do not predict one another), cross-instance
+  (exhaustiveness — every projection covers its dimension). Bloat-
+  six partitions by scope. Inherits parent ordbok §elegance (R2).
+- **Rigor** — α:α at the derivation layer. `make bootstrap`
+  stages 1–5 close the loop ordbok → headers → compiler → ordbok,
+  byte-identical. Bootstrap divergence is rigor failure.
+- **Recursive adaptation** — α:α at the temporal layer. M1→M7
+  moved structural decisions from C into ordbok; each milestone
+  passed bootstrap before the next; the Lakatos barrier names
+  where the gradient stops. Every named principle subject to itself.
+
+The goal is gradient: every milestone, ordbok extension, and
+emitter change must converge the bootstrap, never diverge it. The
+suhc binary is the witness; bootstrap is what verifies it.
+
+Self-contained. Inherits axiom and ordbok from the immediate
+parent (`SPOXIS_CONSTITUTION.md`); `RAE_CONSTITUTION.md` upstream.
 
 ---
 
