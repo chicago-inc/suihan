@@ -13,7 +13,12 @@
 CC      ?= gcc
 CFLAGS  ?= -Wall -Wextra -std=c11 -O2 -D_GNU_SOURCE
 CFLAGS  += -Iinclude
-LDFLAGS ?= -lm
+LDFLAGS ?=
+# -lm is a link LIBRARY, not a linker flag: GNU ld resolves libraries
+# left-to-right, so it must come AFTER the objects on the link line (see the
+# $(TARGET) recipe). Keeping it in LDFLAGS (before the objects) left pow/cbrt/
+# atan2 from color_math.c undefined on strict linkers (CI). Moved to LDLIBS.
+LDLIBS  ?= -lm
 
 # Automatic header dependency generation
 DEPFLAGS = -MMD -MP
@@ -126,7 +131,7 @@ contrast-audit-strict: $(TARGET)
 	@./$(TARGET) --contrast-audit ../../src/lib/theme.ts --strict
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
