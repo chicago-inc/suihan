@@ -33,7 +33,7 @@ Each iteration of the self-hosting pipeline:
 4. **Measures** the entropy cast — new possibility spaces the replacement activates
 5. **Adapts** — the next iteration operates on the cast of the previous one
 
-The conditional entropy H(X|Y) of the hand-written C, given the ordbok's declarations, decreases monotonically as the ordbok absorbs more of the compiler's structure. When H(X|Y) = 0, the hand-written C is fully predictable from the ordbok — it can be deleted. The process is recursive because each absorbed layer changes what the compiler can perceive about itself (D13: S decreases), which exposes the next layer for absorption.
+The conditional entropy H(X|Y) of the hand-written C, given the ordbok's declarations, decreases monotonically as the ordbok absorbs more of the compiler's structure. When H(X|Y) = 0, the hand-written C is fully predictable from the ordbok — it can be deleted. The process is recursive because each absorbed layer changes what the compiler can perceive about itself (§solipsism: S decreases — D13, the number that used to carry this concept, was retired 2026-05-29 as an uncomputable metric; the concept itself lives on unnumbered), which exposes the next layer for absorption.
 
 ---
 

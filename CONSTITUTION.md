@@ -25,8 +25,13 @@ The goal is gradient: every milestone, ordbok extension, and
 emitter change must converge the bootstrap, never diverge it. The
 suhc binary is the witness; bootstrap is what verifies it.
 
-Self-contained. Inherits axiom and ordbok from the immediate
-parent (`SPOXIS_CONSTITUTION.md`); `RAE_CONSTITUTION.md` upstream.
+Self-contained. Inherits axiom and ordbok from the immediate parent,
+which as of the 2026-07-07 constitution rewrite splits across five
+files — `SPOXIS_CONSTITUTION.md` (axiom, structural law),
+`SPOXIS_ORDBOK.md` (vocabulary), `SPOXIS_DERIVATIONS.md` (D-rules),
+`SPOXIS_BUILD_DISCIPLINE.md` (enforceable process rules), and
+`CHICAGO_THEORY.md` (theoretical substrate); `RAE_CONSTITUTION.md`
+upstream.
 
 ---
 
@@ -35,7 +40,7 @@ parent (`SPOXIS_CONSTITUTION.md`); `RAE_CONSTITUTION.md` upstream.
 - **Name:** suhc (the suihan compiler)
 - **Full name:** 歲寒 Suihan — "the cold of the year"
 - **Language:** C11, zero dependencies beyond libc
-- **Version:** 1.0.0 (M7 — full bootstrap, fixed point reached)
+- **Version:** 1.1.0 (P1 — Structural Lint; M7 full bootstrap, fixed point reached, remains the self-hosting baseline)
 - **Source of truth:** `.szh` ordbok files
 - **Emission targets:** TypeScript, PostgreSQL, C11
 
@@ -51,8 +56,8 @@ because of its structural_role, not because someone stored
 "Commissioner" in a display_title column.
 
 **Perception corollary (inherited from parent constitutions'
-Perception Axiom — SPOXIS_CONSTITUTION.md D35, RAE CLAUDE.md D50,
-CHICAGO_THEORY.md §Perception).** The axiom presupposes
+Perception Axiom — SPOXIS_DERIVATIONS.md D35, RAE CLAUDE.md D50,
+CHICAGO_THEORY.md §Perception-and-Pipeline).** The axiom presupposes
 distinguishability, and distinguishability at any rendering or
 input boundary presupposes a perceiver with a channel structure.
 Color conflation, homograph conflation, and any foreground-surface
